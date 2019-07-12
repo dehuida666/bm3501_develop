@@ -40,6 +40,24 @@
 #include "user_battery_management.h"
 
 
+enum {
+  pdl_read_invaild = 0,
+  pdl_read_start,
+  pdl_read_stop,
+  
+}pdl_read_state;
+
+
+typedef struct slc_data{
+    uint8_t  dev_num;
+#ifdef RECONNECT_TO_PDL	
+    uint8_t  pdl_retry;
+#else
+    uint8_t  retry;
+#endif 
+	pdl_read_state  readpdlstate;
+};
+
 //===============================================
 //  VARIABLES CLAIM
 //===============================================
@@ -366,6 +384,7 @@ void BTAPP_Task(void) {
                 BTAPP_TaskState = BT_STATE_READ_PAIR_RECORD_WAIT;
                 BTAPP_timer1ms = 1000; //set 1000 time out
                 //BTAPP_timer1ms = 100;
+                slc_data.readpdlstate = pdl_read_start;
             }
             break;
 
@@ -728,8 +747,25 @@ void BT_LinkbackTaskNext ( void )
 {
     BT_LinkBackTarget++;
     if(BT_LinkBackTarget > BTAPP_Status.pairedRecordNumber)
+    {   
         BT_LinkBackTarget = 1;
-    BT_LinkBackTaskState = BT_LINKBACK_TASK_LB;
+        
+        if(slc_data.pdl_retry > 0)
+		{  
+		   slc_data.pdl_retry--;   
+		   BT_LinkBackTaskState = BT_LINKBACK_TASK_LB;  
+        }
+		else
+		{
+           BT_LinkBackTaskState = BT_LINKBACK_TASK_IDLE;  
+		}
+
+	}
+	else
+	{
+    	BT_LinkBackTaskState = BT_LINKBACK_TASK_LB;	
+	}
+	
 }
 void BT_LinkbackTaskStop ( void )
 {
@@ -754,6 +790,13 @@ void BT_LinkbackTask( void )
             break;
         case BT_LINKBACK_TASK_LB:
             flag = false;
+			
+			if(slc_data.dev_num <= BTAPP_Status.pairedRecordNumber && 
+			   slc_data.dev_num > 1 && slc_data.dev_num < 8)
+			{
+	   			 BTAPP_Status.pairedRecordNumber = slc_data.dev_num;
+			}
+			
             for(i = 0; i< BTAPP_Status.pairedRecordNumber; i++)
             {
                 if(BT_LinkBackTarget == BTAPP_PairRecord[i].linkPriority)
@@ -883,6 +926,28 @@ void DC_DetectTaskStart(void)
 
 }
 
+uint8_t user_EnterSlcConnect(uint8_t retry,uint8_t dev_num)
+{  
+#ifdef RECONNECT_TO_PDL
+     slc_data.pdl_retry = retry;
+#else
+     slc_data.retry = retry;
+#endif 
+    if(dev_num < 1 || dev_num > 8) return 1;
+	
+    slc_data.dev_num = dev_num;
+	
+    if(pdl_read_stop == slc_data.readpdlstate)
+    {
+       BT_LinkbackTaskStart();  
+	}
+	else
+	{
+       return 1;
+	}
+
+	return 0;
+}
 
 //================================================
 //BT status checking
@@ -1215,9 +1280,15 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
         case BT_EVENT_A2DP_LINK_CHANGED:
 			//BT_PlayTone(TONE_Connected);
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
+			if(BT_EVENT_A2DP_LINK_CONNECTED == event)
+			{
+               BTAPP_TaskState = BT_STATE_READ_PAIR_RECORD;
+			}
+			
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18   
             #endif
+			
 			User_SetLedPattern(led_bt_status_off);
 			User_Log("BT_EVENT_A2DP_LINK_CONNECTED\n");
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app            
@@ -1296,6 +1367,12 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             User_SetLedPattern(led_bt_status_off);	
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskNext(); //linkback to all device, diffin, 2019-6-18
+            #else
+			if(slc_data.retry > 0)
+		   	{  
+		   	   slc_data.retry--;
+               BT_LinkbackTaskStart();  
+			}   
             #endif
 			User_Log("BT_EVENT_LINKBACK_FAILED\n");
             break;
@@ -1350,6 +1427,14 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             {
                 BTAPP_TaskState = BT_STATE_VOL_SYNC;
             }
+			
+		
+			if(pdl_read_stop != slc_data.state && 
+			   pdl_read_invaild != slc_data.state )
+			{
+			     slc_data.readpdlstate = pdl_read_stop;
+			}
+		
             break;
 
         case BT_EVENT_LINK_MODE_RECEIVED:
