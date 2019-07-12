@@ -1359,7 +1359,11 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			User_SetLedPattern(led_bt_status_off);
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
+            slc_data.pdl_retry = 0;
+			#else
+			slc_data.retry = 0;
             #endif
+ 
 			User_Log("BT_EVENT_LINKBACK_SUCCESS\n");
             break;
 
