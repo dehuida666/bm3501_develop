@@ -1,0 +1,12 @@
+*.log
+*.o
+*.elf
+*.map
+*.xml
+
+si/
+sw_hex/
+firmware/BM3501.si4project
+firmware/BM3501.X/build
+firmware/BM3501.X/debug
+firmware/BM3501.X/dist
