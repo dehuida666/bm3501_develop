@@ -40,7 +40,7 @@
 #include "user_battery_management.h"
 
 
-enum {
+typedef enum {
   pdl_read_invaild = 0,
   pdl_read_start,
   pdl_read_stop,
@@ -48,7 +48,7 @@ enum {
 }pdl_read_state;
 
 
-typedef struct slc_data{
+typedef struct {
     uint8_t  dev_num;
 #ifdef RECONNECT_TO_PDL	
     uint8_t  pdl_retry;
@@ -56,8 +56,8 @@ typedef struct slc_data{
     uint8_t  retry;
 #endif 
 	pdl_read_state  readpdlstate;
-};
-
+}slc_data_t;
+slc_data_t slc_data;
 //===============================================
 //  VARIABLES CLAIM
 //===============================================
@@ -153,8 +153,10 @@ static void batteryDetect( void );
 static uint8_t bat_convert_advalue_to_level(uint16_t ad_value);
 static void bat_calculate_average_value (uint16_t ad_value);
 
-#endif
 
+
+#endif
+void BT_LinkbackTaskStart ( void );
 static void led_power_on_failed_indicate();
 uint16_t led_power_on_failed_timer1ms = 0;
 bool ledPoweronFailedFlag = false;
@@ -1375,7 +1377,9 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			if(slc_data.retry > 0)
 		   	{  
 		   	   slc_data.retry--;
-               BT_LinkbackTaskStart();  
+    
+               BTAPP_TaskState = BT_STATE_LINKBACK_START; 
+               
 			}   
             #endif
 			User_Log("BT_EVENT_LINKBACK_FAILED\n");
@@ -1433,8 +1437,8 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             }
 			
 		
-			if(pdl_read_stop != slc_data.state && 
-			   pdl_read_invaild != slc_data.state )
+			if(pdl_read_stop != slc_data.readpdlstate && 
+			   pdl_read_invaild != slc_data.readpdlstate )
 			{
 			     slc_data.readpdlstate = pdl_read_stop;
 			}
@@ -2387,7 +2391,8 @@ void BTVOL_DelayChangeVolMode( void )
 {
 	if(btDelayToChangeVolModeTimeOutFlag){
 		btDelayToChangeVolModeTimeOutFlag = false;
-		BTVOL_ChangeVolMode(btDelayMode,isSyncToBTM);
+		BTVOL_ChangeVolMode(btDelayMode,isSyncToBTM);
+
 	}
 
 }
