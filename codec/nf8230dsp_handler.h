@@ -55,6 +55,7 @@ void ntp8230g_set_master_volume(uint8_t vol);
 
 extern void ntp8230g_set_volume(USER_VOLUME_MODE mode, uint8_t vol);
 extern void User_SoundOnOff(uint8_t on_off,bool a2dp_play);
+extern void user_SwitchRout(uint8_t on_off);
 extern void User_VolumeModeSwitch();
 
 extern void User_VolumeUp();

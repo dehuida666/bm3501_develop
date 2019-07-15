@@ -1284,7 +1284,12 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
 			if(BT_EVENT_A2DP_LINK_CONNECTED == event)
 			{
-               BTAPP_TaskState = BT_STATE_READ_PAIR_RECORD;
+              // BTAPP_TaskState = BT_STATE_READ_PAIR_RECORD;
+              if(BT_IsCommandSendTaskIdle()){
+                BT_GetPairRecordCommand();
+                BTAPP_TaskState = BT_STATE_READ_PAIR_RECORD_WAIT;
+                BTAPP_timer1ms = 1000; //set 1000 time out
+              }
 			}
 			
 			#ifdef RECONNECT_TO_PDL

@@ -242,7 +242,7 @@ uint8_t currentBatteryLevel;
 
 
 uint8_t BTAPP_GetStatus(void);
-
+uint8_t user_EnterSlcConnect(uint8_t retry,uint8_t dev_num);
 void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size );
 void BTAPP_EnterBTPairingMode( void );
 uint8_t BTAPP_isBTConnected();

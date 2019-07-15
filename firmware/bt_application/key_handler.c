@@ -265,9 +265,9 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 				User_Log("Power key sp\n");
 				if(BTAPP_GetStatus() == BT_STATUS_READY)
 				{
-					//User_VolumeModeSwitch();
-					BT_SetVoicePromptByRawData();
-					BT_PlayVoicePromptByRawData(BT_DSP_Code_PowerOn,BT_DSP_CODE_PowerOn_LENGTH);
+					User_VolumeModeSwitch();
+					//BT_SetVoicePromptByRawData();
+					//BT_PlayVoicePromptByRawData(BT_DSP_Code_PowerOn,BT_DSP_CODE_PowerOn_LENGTH);
 				}
 
 			}
@@ -292,13 +292,14 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 				}
 				else
 				{
-					if(User_GetPairedRecordNumber())
+					/*if(User_GetPairedRecordNumber())
 					{
 						if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE)
 							BTMSPK_CancelGroup();
 						
 						User_LinkBackToBTDevice();
-					}
+					}*/
+					user_EnterSlcConnect(3,1);
 
 				}
 

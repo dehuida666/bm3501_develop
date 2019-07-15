@@ -806,6 +806,8 @@ static void set_eq_data()
 {
 	unsigned int i;
 
+	User_Log("debug : enter_eq_data\n");
+
 	//LR EQ	
 	for(i=0;i<(sizeof(NTP8230_Eq1_Data_LR)/2);i++)
     {
@@ -1067,17 +1069,53 @@ void ntp8230g_set_volume(USER_VOLUME_MODE mode, uint8_t vol)
 }
 
 
+void user_SwitchRout(uint8_t on_off)
+{
+   const NSP_INIT_STRUCT sound_on[] =  {{0x28,0x04},{0x27,0x00},{0x26,0x00}};
+   const NSP_INIT_STRUCT sound_off[] = {{0x26,0x0f},{0x28,0x02},{0x27,0x0f}};
+   int i = 0;
+   
+   if(on_off)
+   {
+		for(i = 0; i < (sizeof(sound_on)/sizeof(NSP_INIT_STRUCT)); i++)
+		I2C_Write_NTP8230_LR(sound_on[i].RegAddr, sound_on[i].RegData);
+
+		for(i = 0; i < (sizeof(sound_on)/sizeof(NSP_INIT_STRUCT)); i++)
+		I2C_Write_NTP8230_SW(sound_on[i].RegAddr, sound_on[i].RegData);
+
+
+   }
+   else
+   {
+		for(i = 0; i < (sizeof(sound_off)/sizeof(NSP_INIT_STRUCT)); i++)
+		I2C_Write_NTP8230_LR(sound_off[i].RegAddr, sound_off[i].RegData);
+
+		for(i = 0; i < (sizeof(sound_off)/sizeof(NSP_INIT_STRUCT)); i++)
+		I2C_Write_NTP8230_SW(sound_off[i].RegAddr, sound_off[i].RegData);
+		
+   	}
+
+}
+
+
+
 void User_SoundOnOff(uint8_t on_off,bool a2dp_play)
 {
 	const NSP_INIT_STRUCT sound_on[] =  {{0x28,0x04},{0x27,0x00},{0x26,0x00}};
 	const NSP_INIT_STRUCT sound_off[] = {{0x26,0x0f},{0x28,0x02},{0x27,0x0f}};
 	int i = 0;
+
+	User_Log("debug : enter user_soundonoff\n");
+
+	
 	if(on_off)
 	{
+	    
 		if(a2dp_play)
 			BTMA2DP_PlayStart();
 		else
 			BTMA2DP_PauseStart();
+	    
 		
 		for(i = 0; i < (sizeof(sound_on)/sizeof(NSP_INIT_STRUCT)); i++)
 			I2C_Write_NTP8230_LR(sound_on[i].RegAddr, sound_on[i].RegData);
@@ -1089,11 +1127,12 @@ void User_SoundOnOff(uint8_t on_off,bool a2dp_play)
 		
 	}
 	else
-	{
+	{   
 		if(a2dp_play)
 			BTMA2DP_PlayStart();			
 		else
 			BTMA2DP_PauseStart();
+	    
 			
 		
 		for(i = 0; i < (sizeof(sound_off)/sizeof(NSP_INIT_STRUCT)); i++)
