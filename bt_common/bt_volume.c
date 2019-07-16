@@ -266,7 +266,7 @@ void BTVOL_EventHandler( BT_VOLUME_EVENTS event, uint8_t* data, uint16_t size )
 #endif        
                 set7bitVol((uint8_t)data[1], A2DP_VOL_MODE, BTMA2DP_getActiveDatabaseIndex());
                 DSP_setVolCurrentMode();
-				//User_DisplayVolumeLevel();
+				User_DisplayVolumeLevel();
             }
 
 			break;
@@ -624,7 +624,7 @@ void BTVOL_GotSyncVolFromMasterByVendorCmd( uint8_t vol_req, uint8_t vol_value )
             {
                 set7bitVol(vol_value, A2DP_VOL_MODE, BTMA2DP_getActiveDatabaseIndex());
                 DSP_setVolCurrentMode();
-				//User_DisplayVolumeLevel();
+				User_DisplayVolumeLevel();
             }
 #endif
             break;

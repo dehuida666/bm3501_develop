@@ -412,7 +412,7 @@ static void clear_PDL_led_indicate(bool on_off)
 				}
 			}
 		}
-		else if(count == 100)		// 1s
+		else if(count == 500)		// 1s
 		{
 			led_on_off(ledData,OFF);
 			count++;
@@ -647,7 +647,7 @@ static void User_LedPatternIndicateOFF()
 {
 	power_led_indicate(OFF);
 	enter_bt_pairing_led_indicate(OFF);
-	broadcast_primary_pairing_led_indicate(OFF);
+	//broadcast_primary_pairing_led_indicate(OFF);
 	broadcast_secondary_pairing_led_indicate(OFF);
 	hfp_open_led_Indicate(OFF);
 	//broadcast_connected_led_indicate(OFF);
@@ -668,6 +668,11 @@ void User_LedClearPDLOFF()
 	clear_PDL_led_indicate(OFF);
 }
 
+void User_LedPrimaryPairingOFF()
+{
+	User_Log("User_LedPrimaryPairingOFF\n");
+	broadcast_primary_pairing_led_indicate(OFF);
+}
 void User_LedBroadcastConnectedOFF()
 {
 	User_Log("User_LedBroadcastConnectedOFF\n");
@@ -899,7 +904,7 @@ void User_ReturnDisLEDBTStatus()
 void User_ClearPDL()
 {
 	User_SetLedPattern(led_clr_pdl);
-	ledClrPdl_timer1ms = 4000;
+	ledClrPdl_timer1ms = 6500;
 }
 
 void tm1812_task()

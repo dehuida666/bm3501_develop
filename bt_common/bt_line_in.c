@@ -36,7 +36,7 @@ enum
 };
 
 #define BTM_PORT_READ_INTERNAL_MS       500
-#define PORT_DETECT_INTERVAL_MS        100
+#define PORT_DETECT_INTERVAL_MS        50
 #define ANG_POSITIVE_VALIDATE_CNT       3
 #define ANG_LOSS_VALIDATE_TIME_CNT      3
 static uint16_t    ang_audio_detect_cnt = 0;
@@ -138,27 +138,22 @@ void AnalogAudioDetectTask(void)
             audio_selected = auxin_plugged ? AUDIO_AUXIN : AUDIO_A2DP;		
             if( audio_selected == AUDIO_AUXIN )
             {
+				//User_SoundOnOff(OFF,true);
                 BTMA2DP_PauseStart();
+                BT_EnterNonConnectableMode(0);//non-connectable
                 BT_EnterLineInMode(1, 0);
-				user_SwitchRout(ON);
-               //BT_MusicControlCommand(6, BT_linkIndex);
-
-			    User_Log("debug : enter line in mode\n");
-				//if( BTMHFP_GetHFPLinkStatus( BTMHFP_GetDatabaseIndex() ) )
-        			//BT_DisconnectHFPProfile();
+				
             }
 		    else
             {
-                BTMA2DP_PlayStart();
-                BT_EnterLineInMode(0, 0);
-				user_SwitchRout(ON);
-		
-		        //BTMA2DP_PlayStart();//BT_MusicControlCommand(5, BT_linkIndex);
+                BT_EnterLineInMode(0, 0);				
+				BT_EnterNonConnectableMode(1);//normal
+		       
+		        //User_SoundOnOff(OFF,true);
+				 BTMA2DP_PlayStart();
 
-				 User_Log("debug : exit line in mode\n");
-
-				//if(BTMA2DP_getA2DPLinkStatus(BTMA2DP_getActiveDatabaseIndex()) && (!BTMHFP_GetHFPLinkStatus( BTMHFP_GetDatabaseIndex())))
-				//	BT_LinkBackToLastDevice();//reconnect HFP
+				if(BTMA2DP_getA2DPLinkStatus(BTMA2DP_getActiveDatabaseIndex()) && (!BTMHFP_GetHFPLinkStatus( BTMHFP_GetDatabaseIndex())))
+					BT_LinkBackToLastDevice();//reconnect HFP
                
 #ifdef _NO_EVENT_WHEN_LINE_IN_OUT //patch when BTM has bug that not reporting line out event
                 BTM_LINE_IN_EventHandler(BT_EVENT_LINE_IN_STATUS, &temp, 2);        //MCU issue this event, because BTM always forget to report this event            
@@ -190,21 +185,18 @@ void BTM_LINE_IN_EventHandler( BT_LINE_IN_EVENTS event, uint8_t* paras, uint16_t
                 {
                     //BTVOL_ChangeVolMode(LINE_IN_VOL_MODE, false);
 					BTVOL_StartChangeVolMode(LINE_IN_VOL_MODE,false);
-					User_Log("BTVOL_ChangeVolMode 6\n");
-                    //Set_LED_Style(LED_0, LED_BLINK, 500, 500);          //1HZ blinking indicating LINE IN mode.
+					User_Log("BTVOL_ChangeVolMode 6\n");    
 				}
             }
             else
             {
 				if(BTMHFP_GetCallStatus() != BT_CALL_IDLE)           //if it is SCO mode, back to SCO(this is not possible but safe for code)
-                    BT_DisconnectHFPProfile();//BTVOL_ChangeVolMode(HFP_VOL_MODE, false);
+                    ;//BTVOL_ChangeVolMode(HFP_VOL_MODE, false);
                 else{
 					BTVOL_StartChangeVolMode(A2DP_VOL_MODE,false);
                     //BTVOL_ChangeVolMode(A2DP_VOL_MODE, false);
 					User_Log("BTVOL_ChangeVolMode 7\n");
-                }
-				
-                //Set_LED_Style(LED_0, LED_ON, 500, 500); //restore power indication
+                }				
             }
 #ifdef _CODE_FOR_APP
             AppsReportLineInStatus();

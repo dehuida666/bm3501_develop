@@ -26,4 +26,6 @@
 
 void KEY_Handler ( uint8_t key, uint8_t event );
 void KeyHandlers_Timer1MS_event( void );
+bool Broadcast_disconnect_flag;
+
 #endif

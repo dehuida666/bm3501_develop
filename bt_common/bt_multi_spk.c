@@ -221,7 +221,7 @@ void BTMSPK_EventHandler( BT_MSPK_EVENTS event, uint8_t* paras, uint16_t size )
 						(BT_eCSBStatus.nspk_status == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
 					)
 					{
-						
+						User_LedPrimaryPairingOFF();						
 						User_SetLedPattern(led_bt_status_off);//add  MSPK_CONNECTING timeout display by zx
 						User_Log("MSPK_CONNECTING timeout \n");
 					}

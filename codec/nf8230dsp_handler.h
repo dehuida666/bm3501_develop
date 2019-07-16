@@ -55,7 +55,6 @@ void ntp8230g_set_master_volume(uint8_t vol);
 
 extern void ntp8230g_set_volume(USER_VOLUME_MODE mode, uint8_t vol);
 extern void User_SoundOnOff(uint8_t on_off,bool a2dp_play);
-extern void user_SwitchRout(uint8_t on_off);
 extern void User_VolumeModeSwitch();
 
 extern void User_VolumeUp();
@@ -67,6 +66,8 @@ extern void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status);
 extern void DSP_setUserVolumeMode( void );
 
 extern void Ntp8230g_RestoreTrebleAndBass(void);
+extern void NF8230dsp_SetLChannelOnOff(bool on_off);
+extern void NF8230dsp_SetBQOnOff(bool on_off);
 
 
 

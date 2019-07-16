@@ -32,7 +32,7 @@ DRV_I2C_BUFFER_HANDLE I2C_bufferHandle = NULL;
 #define bass_step 7
 #define VOLUME_0db 0xCF
 
-#define vol_tone   10
+#define vol_tone   9
 
 
 extern uint8_t I2C_limitedTimer;
@@ -325,10 +325,10 @@ const NSP_INIT_STRUCT NTP8230_Eq1_Data_LR[]={
 	0x52, 0x90,
 	0x62, 0x1a,
 	0x01, 0x00,
-	0x03, 0x4e,
-	0x04, 0x00,
-	0x05, 0x00,
-	0x06, 0x4e,
+	0x03, 0x00,
+	0x04, 0x4e,
+	0x05, 0x4e,
+	0x06, 0x00,
 	0x07, 0x36,
 	0x08, 0x36,
 	0x32, 0x00,
@@ -342,8 +342,8 @@ const NSP_INIT_STRUCT NTP8230_Eq1_Data_LR[]={
 	0x34, 0x00,
 	0x55, 0x0f,
 	0x2b, 0x0b,
-	0x35, 0x08,
-	0x36, 0x1a,
+	0x35, 0x08,//R
+	0x36, 0x1a,//L
 	0x37, 0x2c,
 	0x7e, 0x03,
 
@@ -448,8 +448,6 @@ const NSP_INIT_STRUCT NTP8230_Eq5_Data_LR[]={
   0x1a, 0x15,
   0x1b, 0x15,  
   0x56, 0x20,
-  0x50, 0x03,
-  0x38, 0x02,
   0x28, 0x04,
   0x27, 0x00,
   0x26, 0x00,
@@ -593,11 +591,28 @@ const NSP_INIT_STRUCT NTP8230_Eq5_Data_Bass[]={
   0x1a, 0x15,
   0x1b, 0x00,  
   0x56, 0x20,
-  0x50, 0x03,
-  0x38, 0x02,
   0x28, 0x04,
   0x27, 0x00,
   0x26, 0x00,
+};
+const NSP_INIT_STRUCT NTP8230_Eq_OFF[]={
+	0x26,0x07,
+	0x0c,0x00,
+	0x17,0x00,
+	0x18,0x00,
+	0x19,0x00,
+	0X1A,0X00,
+	0x26,0x00
+};
+
+const NSP_INIT_STRUCT NTP8230_Eq_ON[]={
+	0x26,0x07,
+	0x0c,0x3f,
+	0x17,0x1F,
+	0x18,0x1F,
+	0X19,0X15,
+	0X1A,0X15,
+	0x26,0x00
 };
 
 
@@ -806,8 +821,6 @@ static void set_eq_data()
 {
 	unsigned int i;
 
-	User_Log("debug : enter_eq_data\n");
-
 	//LR EQ	
 	for(i=0;i<(sizeof(NTP8230_Eq1_Data_LR)/2);i++)
     {
@@ -891,6 +904,66 @@ void NF8230dsp_init(void)
   
 }
 
+void NF8230dsp_SetLChannelOnOff(bool on_off)
+{
+	if(!is_ntp8230g_ready())
+		return;
+	if(on_off)
+	{
+		
+		I2C_Write_NTP8230_LR(TREBLE_CH2_VOLUME_REG, 0xCF);
+		I2C_Write_NTP8230_SW(TREBLE_CH1_VOLUME_REG, 0xCF);
+		I2C_Write_NTP8230_SW(TREBLE_CH2_VOLUME_REG, 0xCF);
+
+	}
+	else
+	{
+		I2C_Write_NTP8230_LR(TREBLE_CH2_VOLUME_REG, 0);
+		I2C_Write_NTP8230_SW(TREBLE_CH1_VOLUME_REG, 0);
+		I2C_Write_NTP8230_SW(TREBLE_CH2_VOLUME_REG, 0);
+
+	}
+
+}
+
+void NF8230dsp_SetBQOnOff(bool on_off)
+{
+    uint8_t i;
+	if(!is_ntp8230g_ready())
+		return;
+	if(on_off)
+	{
+		
+		for(i=0;i<(sizeof(NTP8230_Eq_ON)/2);i++)
+	    {
+
+	        I2C_Write_NTP8230_LR(NTP8230_Eq_ON[i].RegAddr, NTP8230_Eq_ON[i].RegData);
+	    }
+
+		for(i=0;i<(sizeof(NTP8230_Eq_ON)/2);i++)
+	    {
+
+	        I2C_Write_NTP8230_SW(NTP8230_Eq_ON[i].RegAddr, NTP8230_Eq_ON[i].RegData);
+	    }
+
+	}
+	else
+	{
+		for(i=0;i<(sizeof(NTP8230_Eq_OFF)/2);i++)
+	    {
+
+	        I2C_Write_NTP8230_LR(NTP8230_Eq_OFF[i].RegAddr, NTP8230_Eq_OFF[i].RegData);
+	    }
+
+		for(i=0;i<(sizeof(NTP8230_Eq_OFF)/2);i++)
+	    {
+
+	        I2C_Write_NTP8230_SW(NTP8230_Eq_OFF[i].RegAddr, NTP8230_Eq_OFF[i].RegData);
+	    }
+
+	}
+
+}
 static void ntp8230g_set_master_volume_MAX_temp()
 {
 	if(!is_ntp8230g_ready())
@@ -1069,53 +1142,18 @@ void ntp8230g_set_volume(USER_VOLUME_MODE mode, uint8_t vol)
 }
 
 
-void user_SwitchRout(uint8_t on_off)
-{
-   const NSP_INIT_STRUCT sound_on[] =  {{0x28,0x04},{0x27,0x00},{0x26,0x00}};
-   const NSP_INIT_STRUCT sound_off[] = {{0x26,0x0f},{0x28,0x02},{0x27,0x0f}};
-   int i = 0;
-   
-   if(on_off)
-   {
-		for(i = 0; i < (sizeof(sound_on)/sizeof(NSP_INIT_STRUCT)); i++)
-		I2C_Write_NTP8230_LR(sound_on[i].RegAddr, sound_on[i].RegData);
-
-		for(i = 0; i < (sizeof(sound_on)/sizeof(NSP_INIT_STRUCT)); i++)
-		I2C_Write_NTP8230_SW(sound_on[i].RegAddr, sound_on[i].RegData);
-
-
-   }
-   else
-   {
-		for(i = 0; i < (sizeof(sound_off)/sizeof(NSP_INIT_STRUCT)); i++)
-		I2C_Write_NTP8230_LR(sound_off[i].RegAddr, sound_off[i].RegData);
-
-		for(i = 0; i < (sizeof(sound_off)/sizeof(NSP_INIT_STRUCT)); i++)
-		I2C_Write_NTP8230_SW(sound_off[i].RegAddr, sound_off[i].RegData);
-		
-   	}
-
-}
-
-
-
 void User_SoundOnOff(uint8_t on_off,bool a2dp_play)
 {
 	const NSP_INIT_STRUCT sound_on[] =  {{0x28,0x04},{0x27,0x00},{0x26,0x00}};
 	const NSP_INIT_STRUCT sound_off[] = {{0x26,0x0f},{0x28,0x02},{0x27,0x0f}};
 	int i = 0;
-
-	User_Log("debug : enter user_soundonoff\n");
-
-	
 	if(on_off)
 	{
-	    
-		if(a2dp_play)
+		if(a2dp_play){
 			BTMA2DP_PlayStart();
+		}
 		else
-			BTMA2DP_PauseStart();
-	    
+			;//BTMA2DP_PauseStart();
 		
 		for(i = 0; i < (sizeof(sound_on)/sizeof(NSP_INIT_STRUCT)); i++)
 			I2C_Write_NTP8230_LR(sound_on[i].RegAddr, sound_on[i].RegData);
@@ -1127,12 +1165,11 @@ void User_SoundOnOff(uint8_t on_off,bool a2dp_play)
 		
 	}
 	else
-	{   
+	{
 		if(a2dp_play)
-			BTMA2DP_PlayStart();			
+				;//BTMA2DP_PlayStart();			
 		else
 			BTMA2DP_PauseStart();
-	    
 			
 		
 		for(i = 0; i < (sizeof(sound_off)/sizeof(NSP_INIT_STRUCT)); i++)
@@ -1452,19 +1489,25 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 		if(set_master_volume_temp_Flag == false){
 			ntp8230g_set_master_volume_temp(vol_tone);
 			set_master_volume_temp_Flag = true;
-
-			if((Ringtone_Mode == TONE_BroadcastPairing) || (Ringtone_Mode == TONE_BTPairing))//5.5s
+            
+#if 1
+			if((Ringtone_Mode == TONE_BroadcastPairing))//10.841s
 			{
-				ringTone_1msTimer = 3200;
+				ringTone_1msTimer = 10820;
 			}
-			else if(Ringtone_Mode == TONE_BatteryLow) //0.4s
+			else if((Ringtone_Mode == TONE_Connected))//0.97s
 			{
-				ringTone_1msTimer = 400;
+				ringTone_1msTimer = 950;
 			}
-			else//1.5s
+			else if(Ringtone_Mode == TONE_BatteryLow) //0.38s
 			{
-				ringTone_1msTimer = 1600;
+				ringTone_1msTimer = 380;
 			}
+			else//10.721s  BT pairing
+			{
+				ringTone_1msTimer = 10700;
+			}
+#endif
 
 		}
 	}

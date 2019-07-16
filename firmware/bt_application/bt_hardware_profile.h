@@ -40,11 +40,14 @@
 #define _STORE_VOLUME_TO_EEPROM
 #define _BATTERY_CHARGE_DETECT
 
+#define RECONNECT_TO_PDL
+
+
 //#define _UNSUPPORT_3A_EVENT     //3A event is used to return link mode, it is supported by MSPK but not support by 104 ROM
 //#define _SUPPORT_SIMPLE_33_EVENT //33 event is to report multi speaker status. For MSPK, it return connected status with peer address. But for 104 ROM, there is no address, so need to define this macro
 
 //define command size, command buffer size for command in and out
-#define     UR_TX_BUF_SIZE              1000//500         //maximum buffer size for command sending
+#define     UR_TX_BUF_SIZE              9000//500         //maximum buffer size for command sending
 #define     UR_RX_BUF_SIZE              500         //maximum buffer size for command receiving
 #define     BT_CMD_SIZE_MAX				200         //maximum size for a single command
 #define     QUEQUED_CMD_MAX                 30      //maximum number of command in buffer to be sending 
@@ -78,9 +81,9 @@
 
 
 #define BATTERY_CHARGE_SetDisable()          PLIB_PORTS_PinSet( PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_14)
-#define BATTERY_CHARGE_SetEnable()         PLIB_PORTS_PinClear( PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_14)
-#define BATTERY_CHARGE_STATUS_GET()   (PLIB_PORTS_PinGet(PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_14))
-#define IS_BATTERY_CHARGE_Disable  	 USB_CHARGE_STATUS_GET()
+#define BATTERY_CHARGE_SetEnable()        	 PLIB_PORTS_PinClear( PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_14)
+#define BATTERY_CHARGE_STATUS_GET()   		(PLIB_PORTS_PinGet(PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_14))
+#define IS_BATTERY_CHARGE_Disable  	 		BATTERY_CHARGE_STATUS_GET()
 
 //battery charge
 #define BATTERY_DETECT_SetEnable()       		PLIB_PORTS_PinSet( PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_2)

@@ -33,6 +33,7 @@
 #include "bt_a2dp.h"
 #include "bt_hfp.h"
 #include "bt_line_in.h"
+#include "user_tone.h"
 
 
 
@@ -573,7 +574,7 @@ void BT_CommandDecode( void )
 
 		case REPORT_VOICE_PROMPT_STATUS: //0x2A command
 			User_Log("REPORT_VOICE_PROMPT_STATUS\n");
-            //BTVOL_EventHandler( BT_EVENT_AVRCP_ABS_VOLUME_CHANGED, &BT_CmdBuffer[1], BT_CmdDecodeCmdLength - 1 );
+            BTMTONE_EventHandler( BT_EVENT_TTS_STATUS, &BT_CmdBuffer[1], BT_CmdDecodeCmdLength - 1 );
             break;
 
         case REPORT_TYPE_CODEC:

@@ -45,24 +45,18 @@ void BTMHFP_EventHandler( BT_HFP_EVENTS event, uint8_t* paras, uint16_t size )
         case BT_EVENT_CALL_STATUS_CHANGED:
 			User_Log("BT_EVENT_CALL_STATUS_CHANGED \n");
             BT_CallStatus = paras[1];
-			User_Log("debug : callstatus = %d\n",BT_CallStatus);
-			
             if(BT_CallStatus != BT_CALL_IDLE)
             {
 				if(BTM_LINE_IN_GetLineInStatus() != LINE_IN_INACTIVE)
-        			BT_DisconnectHFPProfile();
-				else 
+        			;//BT_DisconnectHFPProfile();
+				else
 				{
-				
-				    if( BT_CallStatus >= BT_CALLING && BT_CallStatus <= BT_CALLING_HOLD)
-				    {
-				   
-						//BTVOL_ChangeVolMode(HFP_VOL_MODE, false);
-						BTVOL_StartChangeVolMode(HFP_VOL_MODE,false);
-						User_Log("BTVOL_ChangeVolMode 3\n");
-						User_SetLedPattern(led_hfp_active);
-				    }
-					
+					//BTVOL_ChangeVolMode(HFP_VOL_MODE, false);
+					NF8230dsp_SetLChannelOnOff(OFF);
+					NF8230dsp_SetBQOnOff(OFF);
+					BTVOL_StartChangeVolMode(HFP_VOL_MODE,false);
+					User_Log("BTVOL_ChangeVolMode 3\n");
+					User_SetLedPattern(led_hfp_active);
 				}
             }
             else
@@ -79,6 +73,8 @@ void BTMHFP_EventHandler( BT_HFP_EVENTS event, uint8_t* paras, uint16_t size )
                     BTVOL_StartChangeVolMode(A2DP_VOL_MODE,false);
 					User_Log("BTVOL_ChangeVolMode 5\n");
                 }
+				NF8230dsp_SetLChannelOnOff(ON);
+				NF8230dsp_SetBQOnOff(ON);
 
 				User_SetLedPattern(led_bt_status_off);
             }

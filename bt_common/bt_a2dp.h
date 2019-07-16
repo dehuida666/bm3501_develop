@@ -52,14 +52,14 @@ typedef enum {
 //@
 typedef enum {
     SAMP_8KHZ = 0,
-            SAMP_12KHZ,
-            SAMP_16KHZ,
-            SAMP_24KHZ,
-            SAMP_32KHZ,
-            SAMP_48KHZ,
-            SAMP_44_1KHZ,
-            SAMP_88_2KHZ,
-            SAMP_96KHZ
+    SAMP_12KHZ,
+    SAMP_16KHZ,
+    SAMP_24KHZ,
+    SAMP_32KHZ,
+    SAMP_48KHZ,
+    SAMP_44_1KHZ,
+    SAMP_88_2KHZ,
+    SAMP_96KHZ
 } BT_PLAYING_SAMPLING_RATE;//BT_PlayingSamplingRate;
 
 typedef struct {

@@ -32,8 +32,6 @@
 #define MCU_MINOR_VERSION 3
 #define MCU_SUB_VERSION   6
 
-#define RECONNECT_TO_PDL
-
 //r1.25
 // 1. for VOL+ and VOL- buttons which have repeat events, modify repeat rate from 100ms to 200ms,
 // 2. for stereo mode or concert mode slave, if it gets events  showing it is HFP mode or line in mode, when doing volume up or volume down, MCU sends C02 00 30/31 instead of sending C23 command.
@@ -242,7 +240,7 @@ uint8_t currentBatteryLevel;
 
 
 uint8_t BTAPP_GetStatus(void);
-uint8_t user_EnterSlcConnect(uint8_t retry,uint8_t dev_num);
+
 void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size );
 void BTAPP_EnterBTPairingMode( void );
 uint8_t BTAPP_isBTConnected();

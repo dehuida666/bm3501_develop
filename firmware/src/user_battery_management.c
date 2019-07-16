@@ -13,6 +13,8 @@ static void battery_chargeHandle(void);
 static void USB_chargeHandle(void);
 
 static bool isUSBChargeComplete = false;
+static bool isBatteryChargeComplete = false;
+
 
 enum
 {
@@ -24,6 +26,7 @@ void User_BatteryManagementInit(void)
 {
 	ntc_TemperatureLevel = NTC_TEMPERATURE_LEVEL3;
 	isUSBChargeComplete = false;
+	isBatteryChargeComplete = false;
 }
 
 
@@ -47,7 +50,7 @@ void User_BatteryManagementTask(void)
 	if(detect_timer100msTimeOutFlag)
 	{
 		detect_timer100msTimeOutFlag = false;
-		ntc_adValueHandle();
+		//ntc_adValueHandle();
 		battery_chargeHandle();
 		USB_chargeHandle();
 
@@ -181,17 +184,52 @@ bool USB_isChargecomplete(void)
 	return isUSBChargeComplete;
 }
 
-
 /*
 ********************************************************************************
 *battery charge
 ********************************************************************************
 */
+bool Battery_isChargecomplete(void)
+{
+	return isBatteryChargeComplete;
+}
+
 static void battery_chargeHandle(void)
 {
 	static uint8_t pin_batteryChargingStatus = PIN_BATTERY_CHARGE_HIGH;
 	static uint8_t pin_batteryChargeDoneStatus = PIN_BATTERY_CHARGE_HIGH;
 	static uint8_t battery_detect_cnt = 5;
+	static uint8_t charge_done_detect_cnt = 5;
+
+	if(NTC_getTemperatureLevel() != NTC_TEMPERATURE_LEVEL3){
+		battery_detect_cnt = 5;
+		charge_done_detect_cnt = 5;
+		if(!IS_BATTERY_CHARGE_Disable)
+		{
+			isBatteryChargeComplete = true;
+			BATTERY_CHARGE_SetDisable();
+			User_Log("Battery charge abnormal\n");
+		}
+		return;
+	}
+
+	if(DC_PULL_OUT)
+	{
+		if(!IS_BATTERY_CHARGE_Disable)
+		{
+			isBatteryChargeComplete = true;
+			BATTERY_CHARGE_SetDisable();
+			User_Log("DC pull out\n");
+		}
+		return;
+	}
+
+	if(IS_BATTERY_CHARGE_Disable)
+	{
+		BATTERY_CHARGE_SetEnable();
+		User_Log("Charging Enable\n");
+	}
+	
 
 	switch(pin_batteryChargingStatus)
 	{
@@ -229,6 +267,72 @@ static void battery_chargeHandle(void)
 			else
 			{
 				battery_detect_cnt = 5;
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	switch(pin_batteryChargeDoneStatus)
+	{
+		case PIN_BATTERY_CHARGE_HIGH:
+			if(CHARGE_STATUS2_GET())
+			{
+				charge_done_detect_cnt = 5;
+				if(pin_batteryChargingStatus == PIN_BATTERY_CHARGE_LOW)//charging
+				{
+					if(isBatteryChargeComplete)
+					{
+						isBatteryChargeComplete = false;
+						User_Log("Charging\n");
+					}
+				}
+				else
+				{
+					if(!isBatteryChargeComplete)
+					{
+						isBatteryChargeComplete = true;
+						User_Log("Charging Pin high error\n");
+					}					
+				}
+
+			}
+			else
+			{
+				if(charge_done_detect_cnt){
+					charge_done_detect_cnt--;
+					if(charge_done_detect_cnt == 0)
+					{
+						charge_done_detect_cnt = 5;
+						pin_batteryChargeDoneStatus = PIN_BATTERY_CHARGE_LOW;
+					}
+				}
+			}
+			break;
+
+		case PIN_BATTERY_CHARGE_LOW:
+			if(CHARGE_STATUS2_GET())
+			{
+				if(charge_done_detect_cnt){
+					charge_done_detect_cnt--;
+					if(charge_done_detect_cnt == 0)
+					{
+						charge_done_detect_cnt = 5;
+						pin_batteryChargeDoneStatus = PIN_BATTERY_CHARGE_HIGH;
+					}		
+				}
+			}
+			else
+			{
+				charge_done_detect_cnt = 5;
+				if(pin_batteryChargingStatus == PIN_BATTERY_CHARGE_HIGH)//charge done
+				{
+					if(!isBatteryChargeComplete){
+						isBatteryChargeComplete = true;
+						User_Log("Charging Disable\n");
+					}
+				}
 			}
 			break;
 

@@ -38,26 +38,10 @@
 
 #include "led.h"
 #include "user_battery_management.h"
+#include "user_tone.h"
 
+#include "key_handler.h"
 
-typedef enum {
-  pdl_read_invaild = 0,
-  pdl_read_start,
-  pdl_read_stop,
-  
-}pdl_read_state;
-
-
-typedef struct {
-    uint8_t  dev_num;
-#ifdef RECONNECT_TO_PDL	
-    uint8_t  pdl_retry;
-#else
-    uint8_t  retry;
-#endif 
-	pdl_read_state  readpdlstate;
-}slc_data_t;
-slc_data_t slc_data;
 //===============================================
 //  VARIABLES CLAIM
 //===============================================
@@ -153,10 +137,8 @@ static void batteryDetect( void );
 static uint8_t bat_convert_advalue_to_level(uint16_t ad_value);
 static void bat_calculate_average_value (uint16_t ad_value);
 
-
-
 #endif
-void BT_LinkbackTaskStart ( void );
+
 static void led_power_on_failed_indicate();
 uint16_t led_power_on_failed_timer1ms = 0;
 bool ledPoweronFailedFlag = false;
@@ -386,7 +368,6 @@ void BTAPP_Task(void) {
                 BTAPP_TaskState = BT_STATE_READ_PAIR_RECORD_WAIT;
                 BTAPP_timer1ms = 1000; //set 1000 time out
                 //BTAPP_timer1ms = 100;
-                slc_data.readpdlstate = pdl_read_start;
             }
             break;
 
@@ -414,16 +395,18 @@ void BTAPP_Task(void) {
 
 		case BT_STATE_PLAY_POWER_ON_TONE:				
 			if(BT_IsCommandSendTaskIdle()){
-				BT_PlayTone(TONE_PowerOn);//power on	
+				//BT_PlayTone(TONE_PowerOn);//power on	
+				//Tone_PlayPowerOn();
+				Tone_PlayVoicePrompt(TONE_PowerOn);
 				User_Log("Send power on tone\n");
 				BTAPP_TaskState = BT_STATE_READ_LINKED_MODE;
-				BTAPP_timer1ms = 100;
+				BTAPP_timer1ms = 2000;
 			}
 			break;
 
         case BT_STATE_READ_LINKED_MODE:
 			if (BTAPP_timer1ms)
-				return;
+				break;
 			
             if(BT_IsCommandSendTaskIdle()) {
 #ifdef _UNSUPPORT_3A_EVENT
@@ -477,9 +460,11 @@ void BTAPP_Task(void) {
 
                             
                             BT_LinkbackTaskStart();//BT_LinkBackTaskState = BT_LINKBACK_TASK_START;
-#endif
+#else
 //linkback to all device, diffin, 2019-6-18 <<		
 							BT_LinkBackToLastDevice();
+#endif
+
                             //BTAPP_TaskState = BT_STATE_LINKBACK_TO_LAST_DEVICE;
                             BTAPP_TaskState = BT_STATE_BT_RUNNING;
                         }
@@ -518,13 +503,15 @@ void BTAPP_Task(void) {
 				        BTAPP_TaskState = BT_STATE_BT_RUNNING;
 				        break;
 				    case 4:     //broadcast master
+				    	User_SetLedPattern(led_broadcast_master);
 				        BTMSPK_TriggerConcertModeMaster();
-						User_SetLedPattern(led_broadcast_master);
+						
 				        BTAPP_TaskState = BT_STATE_BT_RUNNING;
 				        break;
 				    case 5:     //broadcast slave
+				    	User_SetLedPattern(led_broadcast_slave);
 				        BTMSPK_TriggerConcertModeSlave();
-						User_SetLedPattern(led_broadcast_slave);
+						
 				        BTAPP_TaskState = BT_STATE_BT_RUNNING;
 				        break;
 
@@ -661,6 +648,8 @@ void BTAPP_Task(void) {
 #endif
 
 		DC_DetectTask();
+		BTMTONE_Task();
+
 
 		BTVOL_DelayChangeVolMode();
 
@@ -685,7 +674,7 @@ void BTAPP_Task(void) {
 
 		if(sys_timer100msTimeOutFlag)
 		{
-			sys_timer100msTimeOutFlag = false;
+			sys_timer100msTimeOutFlag = false;			
 			if(BTAPP_GetStatus() > BT_STATUS_OFF)
 			{
 				if(
@@ -748,26 +737,14 @@ void BT_LinkbackTaskStart ( void )
 void BT_LinkbackTaskNext ( void )
 {
     BT_LinkBackTarget++;
-    if(BT_LinkBackTarget > BTAPP_Status.pairedRecordNumber)
-    {   
+    if(BT_LinkBackTarget > BTAPP_Status.pairedRecordNumber){
         BT_LinkBackTarget = 1;
-        
-        if(slc_data.pdl_retry > 0)
-		{  
-		   slc_data.pdl_retry--;   
-		   BT_LinkBackTaskState = BT_LINKBACK_TASK_LB;  
-        }
-		else
-		{
-           BT_LinkBackTaskState = BT_LINKBACK_TASK_IDLE;  
-		}
-
+		BT_LinkBackTaskState = BT_LINKBACK_TASK_IDLE;
+    }
+	else{
+		
+    	BT_LinkBackTaskState = BT_LINKBACK_TASK_LB;
 	}
-	else
-	{
-    	BT_LinkBackTaskState = BT_LINKBACK_TASK_LB;	
-	}
-	
 }
 void BT_LinkbackTaskStop ( void )
 {
@@ -792,13 +769,6 @@ void BT_LinkbackTask( void )
             break;
         case BT_LINKBACK_TASK_LB:
             flag = false;
-			
-			if(slc_data.dev_num <= BTAPP_Status.pairedRecordNumber && 
-			   slc_data.dev_num > 1 && slc_data.dev_num < 8)
-			{
-	   			 BTAPP_Status.pairedRecordNumber = slc_data.dev_num;
-			}
-			
             for(i = 0; i< BTAPP_Status.pairedRecordNumber; i++)
             {
                 if(BT_LinkBackTarget == BTAPP_PairRecord[i].linkPriority)
@@ -893,6 +863,7 @@ void DC_DetectTask(void)
 			{
 				currentBatteryLevel = User_GetCurrentBatteryLevel();
 			}
+			
 			User_LEDDisplayChargeBatteryLevel(currentBatteryLevel);
 			User_Log("DC plug in\n");
 			User_Log("User_LEDDisplayChargeBatteryLevel = %d\n",currentBatteryLevel);
@@ -928,28 +899,6 @@ void DC_DetectTaskStart(void)
 
 }
 
-uint8_t user_EnterSlcConnect(uint8_t retry,uint8_t dev_num)
-{  
-#ifdef RECONNECT_TO_PDL
-     slc_data.pdl_retry = retry;
-#else
-     slc_data.retry = retry;
-#endif 
-    if(dev_num < 1 || dev_num > 8) return 1;
-	
-    slc_data.dev_num = dev_num;
-	
-    if(pdl_read_stop == slc_data.readpdlstate)
-    {
-       BT_LinkbackTaskStart();  
-	}
-	else
-	{
-       return 1;
-	}
-
-	return 0;
-}
 
 //================================================
 //BT status checking
@@ -977,7 +926,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
     uint8_t send_master_address[7];
 #endif
 
-	User_Log("BTAPP_EventHandler event : 0x%02d\n",event);
+	User_Log("BTAPP_EventHandler event : 0x%02x\n",event);
     switch(event)
     {
         case BT_EVENT_CMD_SENT_ACK_OK:
@@ -992,7 +941,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
                 BT_GiveUpThisCommand();
 			else
 			{
-				User_Log("BT_EVENT_CMD_SENT_NO_ACK : %d\n",*paras);
+				User_Log("BT_EVENT_CMD_SENT_NO_ACK : 0x%02x\n",*paras);
 			}
             break;
             
@@ -1115,7 +1064,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 #endif              
             break;
         case BT_EVENT_MSPK_CONNECTING:
-			//BT_PlayTone(TONE_BroadcastPairing);
+			BT_PlayTone(TONE_BroadcastPairing);
 			User_Log("BT_EVENT_MSPK_CONNECTING\n");
 			
 #ifdef _UNSUPPORT_3A_EVENT   
@@ -1167,7 +1116,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 #endif
             break;
         case BT_EVENT_MSPK_CONNECTED_AS_BROADCAST_MASTER:
-			//BT_PlayTone(TONE_Connected);
+			BT_PlayTone(TONE_Connected);
 			User_SetLedPattern(led_broadcast_connect);
 			//User_LedBroadcastConnectedON();
 			User_Log("BT_EVENT_MSPK_CONNECTED_AS_BROADCAST_MASTER\n");
@@ -1191,7 +1140,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_MSPK_CONNECTED_AS_BROADCAST_SLAVE:
 			//User_LedBroadcastConnectedON();
-			//BT_PlayTone(TONE_Connected);
+			BT_PlayTone(TONE_Connected);
 			User_SetLedPattern(led_broadcast_connect);
 			User_Log("BT_EVENT_MSPK_CONNECTED_AS_BROADCAST_SLAVE\n");
             
@@ -1218,6 +1167,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 #endif             
             break;
         case BT_EVENT_MSPK_BROADCAST_MASTER_CONNECTING_END:
+			User_LedPrimaryPairingOFF();
 			User_SetLedPattern(led_bt_status_off);
 			User_Log("BT_EVENT_MSPK_BROADCAST_MASTER_CONNECTING_END\n");
      
@@ -1251,6 +1201,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 
         case BT_EVENT_HFP_LINK_CONNECTED:
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
+			BT_UpdateBatteryLevel(currentBatteryLevel);
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
             #endif
@@ -1280,23 +1231,19 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_A2DP_LINK_CONNECTED:			
         case BT_EVENT_A2DP_LINK_CHANGED:
-			//BT_PlayTone(TONE_Connected);
+			User_SetLedPattern(led_bt_status_off);
+			BT_PlayTone(TONE_Connected);
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
 			if(BT_EVENT_A2DP_LINK_CONNECTED == event)
 			{
-              // BTAPP_TaskState = BT_STATE_READ_PAIR_RECORD;
               if(BT_IsCommandSendTaskIdle()){
                 BT_GetPairRecordCommand();
-                BTAPP_TaskState = BT_STATE_READ_PAIR_RECORD_WAIT;
-                BTAPP_timer1ms = 1000; //set 1000 time out
               }
 			}
-			
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18   
             #endif
 			
-			User_SetLedPattern(led_bt_status_off);
 			User_Log("BT_EVENT_A2DP_LINK_CONNECTED\n");
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app            
             if(BLE_advUpdateBTMState(BLE_BTM_CONN_ALL))
@@ -1305,6 +1252,11 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_A2DP_LINK_DISCONNECTED:
 			//BTAPP_EnterBTPairingMode();
+			if(Broadcast_disconnect_flag)
+			{
+				Broadcast_disconnect_flag = false;
+				BTMSPK_TriggerConcertModeSlave();
+			}
             break;
             
         case BT_EVENT_SYS_POWER_ON:			
@@ -1320,8 +1272,9 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_SYS_POWER_OFF:
             BTAPP_Status.status = BT_SYSTEM_POWER_OFF;
-			//BT_PlayTone(TONE_PowerOff);
+			BT_PlayTone(TONE_PowerOff);
 			User_SetLedPattern(led_voloff);
+			User_LedPrimaryPairingOFF();
 			User_SetLedPattern(led_bt_status_off);
 			User_LedBroadcastConnectedOFF();
 			User_LedClearPDLOFF();
@@ -1347,6 +1300,8 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
         case BT_EVENT_SYS_PAIRING_START:
             BTAPP_Status.status = BT_SYSTEM_PAIRING;
 			//BT_PlayTone(TONE_BTPairing);
+			//Tone_PlayBTPairing();
+			Tone_PlayVoicePrompt(TONE_BTPairing);
             User_SetLedPattern(led_pairing);
 			User_Log("BT_EVENT_SYS_PAIRING_START\n");
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app            
@@ -1366,11 +1321,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			User_SetLedPattern(led_bt_status_off);
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
-            slc_data.pdl_retry = 0;
-			#else
-			slc_data.retry = 0;
             #endif
- 
 			User_Log("BT_EVENT_LINKBACK_SUCCESS\n");
             break;
 
@@ -1378,14 +1329,6 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             User_SetLedPattern(led_bt_status_off);	
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskNext(); //linkback to all device, diffin, 2019-6-18
-            #else
-			if(slc_data.retry > 0)
-		   	{  
-		   	   slc_data.retry--;
-    
-               BTAPP_TaskState = BT_STATE_LINKBACK_START; 
-               
-			}   
             #endif
 			User_Log("BT_EVENT_LINKBACK_FAILED\n");
             break;
@@ -1440,14 +1383,6 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             {
                 BTAPP_TaskState = BT_STATE_VOL_SYNC;
             }
-			
-		
-			if(pdl_read_stop != slc_data.readpdlstate && 
-			   pdl_read_invaild != slc_data.readpdlstate )
-			{
-			     slc_data.readpdlstate = pdl_read_stop;
-			}
-		
             break;
 
         case BT_EVENT_LINK_MODE_RECEIVED:
@@ -2030,50 +1965,54 @@ static uint8_t bat_convert_advalue_to_level(uint16_t ad_value)
 	uint16_t bat_adc_value = ad_value;
 	uint8_t bat_level = 0;
 	
-	if(bat_adc_value <= 713)//2.3v
+	if(bat_adc_value <= 710)//2.29v  10
 	{
 		bat_level = 0;
 	}
-	else if(bat_adc_value <= 738)//2.38v
+	else if(bat_adc_value <= 741)//2.39v 10.4
 	{
 		bat_level = 10;
 	}
-	else if(bat_adc_value <= 760)//2.45v
+	else if(bat_adc_value < 763)//2.43v 10.7
+	{
+		bat_level = 11;
+	}
+	else if(bat_adc_value < 785)//2.53v 11
 	{
 		bat_level = 20;
 	}
-	else if(bat_adc_value <= 776)//2.50v
+	else if(bat_adc_value < 800)//2.58v 11.2
 	{
 		bat_level = 30;
-	}
-	else if(bat_adc_value <= 792)//2.55v
+
+	} 
+	else if(bat_adc_value < 814)//2.625v 11.4
 	{
 		bat_level = 40;
-
 	}
-	else if(bat_adc_value <= 806)//2.6v
+	else if(bat_adc_value < 828)//2.67v 11.6
 	{
 		bat_level = 50;
 	}	
-	else if(bat_adc_value <= 822)//2.65v
+	else if(bat_adc_value < 841)//2.71v 11.8
 	{
 		bat_level = 60;
 	}
-	else if(bat_adc_value <= 837)//2.70v
+	else if(bat_adc_value < 856)//2.76v 12
 	{
 		bat_level = 70;
 
 	}
-	else if(bat_adc_value <= 853)//2.75v
+	else if(bat_adc_value < 871)//2.81v 12.2
 	{
 		bat_level = 80;
 	}
-	else if(bat_adc_value < 868)//2.8v
+	else if(bat_adc_value < 885)//
 	{
 		bat_level = 90;
 			
 	}
-	else if(bat_adc_value >= 868)//2.8v
+	else if(bat_adc_value >= 885)//2.856v   12.4
 	{
 		bat_level = 100;
 	}
@@ -2199,29 +2138,7 @@ void User_LEDDisplayChargeBatteryLevel(uint8_t level)
 		{
 			Set_LED_Style(LED_1,LED_ON,1000,1000);
 
-		}
-		#if 1
-
-		if(level < 100)
-		{
-			if(IS_BATTERY_CHARGE_Disable)
-			{
-				if(NTC_getTemperatureLevel() == NTC_TEMPERATURE_LEVEL3)
-					BATTERY_CHARGE_SetEnable();
-				else
-				{
-					User_Log("NTC battery charge abnormal\n");
-				}
-			}
-		}
-		else
-		{
-			if(!IS_BATTERY_CHARGE_Disable)
-			{
-				BATTERY_CHARGE_SetDisable();
-			}
-		}
-		#endif
+		}		
 
 	}
 
@@ -2260,7 +2177,7 @@ void User_LEDDisplayNoChargeBatteryLevel(uint8_t level)
 		}
 		else 
 		#endif
-		if(level <= 20)
+		if(level <= 10)
 		{
 			if(BTAPP_GetStatus() > BT_STATUS_OFF){
 				if(batteryLowAutoPowerOff_100mstimer == 0){
@@ -2302,6 +2219,7 @@ void User_LinkBackToBTDevice( void )
 	if(BTAPP_Status.pairedRecordNumber != 0)
     {
         BT_LinkBackToLastDevice();
+        //BT_LinkbackTaskStart();
     }
 
 }
@@ -2394,17 +2312,28 @@ static void led_power_on_failed_indicate()
 
 void BTVOL_DelayChangeVolMode( void )
 {
-	if(btDelayToChangeVolModeTimeOutFlag){
+	if(btDelayToChangeVolMode_timer1ms)
+	{
+		if(!BTMA2DP_GetA2DPCodecStatus())
+		{
+			User_Log("A2DP Codec inactive\n");
+			btDelayToChangeVolMode_timer1ms = 0;
+			btDelayToChangeVolModeTimeOutFlag = true;
+		}
+	}
+	
+	if(btDelayToChangeVolModeTimeOutFlag){		
 		btDelayToChangeVolModeTimeOutFlag = false;
 		BTVOL_ChangeVolMode(btDelayMode,isSyncToBTM);
 
 	}
+		
 
 }
 
 void BTVOL_StartChangeVolMode(VOLUME_MODE mode, bool syncToBTM )
 {
-	btDelayToChangeVolMode_timer1ms = 100;
+	btDelayToChangeVolMode_timer1ms = 800;
 	btDelayMode = mode;
 	isSyncToBTM = syncToBTM;
 }
