@@ -1040,9 +1040,11 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 //start linkback task when multi speaker reports idle status.
 //but this may cause other side effect, may need more accurate condtion to start the task.	
 #ifdef RECONNECT_TO_PDL
-
-            if(!BT_LinkbackTaskRunning())
-                BT_LinkbackTaskStart();
+            if(size && paras[0])
+            {
+                if(!BT_LinkbackTaskRunning())
+                    ;//BT_LinkbackTaskStart();
+            }
 #endif
 //linkback to all device, diffin, 2019-6-18 <<				
 			User_LedBroadcastConnectedOFF();
@@ -1064,7 +1066,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 #endif              
             break;
         case BT_EVENT_MSPK_CONNECTING:
-			BT_PlayTone(TONE_BroadcastPairing);
+			//BT_PlayTone(TONE_BroadcastPairing);
 			User_Log("BT_EVENT_MSPK_CONNECTING\n");
 			
 #ifdef _UNSUPPORT_3A_EVENT   
@@ -1126,7 +1128,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 #ifdef RECONNECT_TO_PDL
 
                 if(!BT_LinkbackTaskRunning())
-                    BT_LinkbackTaskStart();
+                    ;//BT_LinkbackTaskStart();
 #endif
 //linkback to all device, diffin, 2019-6-18 <<					
 
@@ -1214,6 +1216,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			//BT_UpdateBatteryLevel(currentBatteryLevel);
             break;
         case BT_EVENT_HFP_LINK_DISCONNECTED:
+			User_Log("BT_EVENT_HFP_LINK_DISCONNECTED\n");
             break;
         case BT_EVENT_SPP_LINK_CONNECTED:
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app            
@@ -1252,13 +1255,19 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_A2DP_LINK_DISCONNECTED:
 			//BTAPP_EnterBTPairingMode();
+			User_Log("BT_EVENT_A2DP_LINK_DISCONNECTED\n");
+			
+            break;
+
+		case BT_EVENT_ACL_DISCONNECTED:
+			User_Log("BT_EVENT_A2DP_LINK_DISCONNECTED\n");
 			if(Broadcast_disconnect_flag)
 			{
 				Broadcast_disconnect_flag = false;
 				BTMSPK_TriggerConcertModeSlave();
 			}
-            break;
-            
+			break;
+				
         case BT_EVENT_SYS_POWER_ON:			
 			User_sys_nosignal_time = 0;
             BTAPP_Status.status = BT_SYSTEM_POWER_ON;
@@ -1299,8 +1308,6 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 
         case BT_EVENT_SYS_PAIRING_START:
             BTAPP_Status.status = BT_SYSTEM_PAIRING;
-			//BT_PlayTone(TONE_BTPairing);
-			//Tone_PlayBTPairing();
 			Tone_PlayVoicePrompt(TONE_BTPairing);
             User_SetLedPattern(led_pairing);
 			User_Log("BT_EVENT_SYS_PAIRING_START\n");

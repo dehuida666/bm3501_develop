@@ -236,9 +236,20 @@ void BTMSPK_EventHandler( BT_MSPK_EVENTS event, uint8_t* paras, uint16_t size )
 						//User_SetLedPattern(led_bt_status_off);//add  MSPK_CONNECTING timeout display by zx
 					}
 					#endif
+                    uint8_t pa = 0;
+                    if(BT_eCSBStatus.nspk_status == BT_CSB_STATUS_CONNECTING)
+                    {
+                        pa = 1;
+                        BT_eCSBStatus.nspk_status = BT_CSB_STATUS_STANDBY;	
+                        BT_eCSBStatus.nspkSlaveCounter = 0;
+                        BTAPP_EventHandler(BT_EVENT_MSPK_STANDBY, &pa, 1);  
+                    }
+                    else
+                    {
                     BT_eCSBStatus.nspk_status = BT_CSB_STATUS_STANDBY;	
                     BT_eCSBStatus.nspkSlaveCounter = 0;
-                    BTAPP_EventHandler(BT_EVENT_MSPK_STANDBY, 0, 0);                     
+                    BTAPP_EventHandler(BT_EVENT_MSPK_STANDBY, &pa, 1);   
+                    }
 #ifdef PATCH_01
                     BT_eCSBStatus.latestConcertSlaveBDAddr[0] = 0;
                     BT_eCSBStatus.latestConcertSlaveBDAddr[1] = 0;

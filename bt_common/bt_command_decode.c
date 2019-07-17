@@ -471,6 +471,11 @@ void BT_CommandDecode( void )
                 case BT_AVRCP_DISCONNECTED:
                     BTMA2DP_EventHandler( BT_EVENT_AVRCP_DISCONNECTED, &BT_CmdBuffer[1], BT_CmdDecodeCmdLength - 1 );
                     break;
+
+				//ACL
+				case BT_ACL_DISCONNECTED:
+                    BTAPP_EventHandler(BT_EVENT_ACL_DISCONNECTED, &BT_CmdBuffer[1], BT_CmdDecodeCmdLength - 1 );
+                    break;
             }
             break;
 

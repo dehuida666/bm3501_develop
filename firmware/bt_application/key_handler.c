@@ -387,8 +387,7 @@ void KEY_Handler ( uint8_t key, uint8_t event )
                         case BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER:
 							//BTMSPK_AddMoreSpeaker();
 							break;
-                        case BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE:
-							
+                        case BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE:							
 								BTMSPK_CancelGroup();							
                             break;
                         case BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING:
