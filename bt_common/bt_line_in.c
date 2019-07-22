@@ -104,8 +104,8 @@ static void AnalogAudioDetect(void)
 
 		//if( BTAPP_isBTConnected())
     		//BT_DisconnectBTClassic();
-    	if( BTMHFP_GetHFPLinkStatus( BTMHFP_GetDatabaseIndex() ) )
-        	BT_DisconnectHFPProfile();
+    	//if( BTMHFP_GetHFPLinkStatus( BTMHFP_GetDatabaseIndex() ) )
+        	//BT_DisconnectHFPProfile();
 
     }
 }

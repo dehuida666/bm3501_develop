@@ -40,7 +40,11 @@
 
 extern DRV_HANDLE UART_Handle;
 volatile uint16_t DFU_timer;
-bool Broadcast_disconnect_flag = false;
+bool ACL_disconnect_flag = false;
+
+bool Broadcast_go_to_slave_flag = false;
+bool Broadcast_go_to_master_flag = false;
+
 
 void KEY_Handler ( uint8_t key, uint8_t event )
 {
@@ -82,7 +86,8 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 						if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE)
 							BTMSPK_CancelGroup();
 						
-						User_LinkBackToBTDevice();
+						//User_LinkBackToBTDevice();
+						BT_LinkbackTaskStart();
 					}
 
 				}
@@ -95,13 +100,19 @@ void KEY_Handler ( uint8_t key, uint8_t event )
                     && BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_NSPK_SLAVE
                     && BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE )
                 {
-					if(
-						(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING) ||
+					if(						
 						(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTING)
 					)
 					{
 						BTMSPK_CancelGroupCreation();
 
+					}
+					else if(
+						(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) ||
+						(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+					)
+					{
+						BTMSPK_CancelGroup();
 					}
 					BTAPP_EnterBTPairingMode();
 					User_Log("BT pairing\n");
@@ -347,7 +358,11 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 							BTMSPK_AddMoreSpeaker();
 							break;
                         case BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE:
-                            BTMSPK_CancelGroup();							
+							if(User_GetPairedRecordNumber()){
+	                            BTMSPK_CancelGroup();	
+	                            Broadcast_go_to_master_flag = true;
+							}
+							
                             break;
                         case BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING:
                             //BTMSPK_CancelGroupCreation();
@@ -365,10 +380,10 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 							BT_LinkbackTaskStop();//linkback to all device, diffin, 2019-6-18
 							#endif
                             //BTMSPK_CreatStereoMode();
-                            Broadcast_disconnect_flag = false;
+                            ACL_disconnect_flag = false;
                             if(BTAPP_isBTConnected()){
 								BT_DisconnectAllProfile();
-								Broadcast_disconnect_flag = true;
+								ACL_disconnect_flag = true;
                             }
 							else
                             	BTMSPK_TriggerConcertModeSlave();
@@ -385,13 +400,20 @@ void KEY_Handler ( uint8_t key, uint8_t event )
                             //BTMSPK_CancelGroupCreation();
                             break;
                         case BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER:
+							BTMSPK_CancelGroup();
+							Broadcast_go_to_slave_flag = true;	
+							
 							//BTMSPK_AddMoreSpeaker();
 							break;
                         case BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE:							
-								BTMSPK_CancelGroup();							
+								BTMSPK_CancelGroup();	
+								Broadcast_go_to_slave_flag = true;								
                             break;
                         case BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING:
                             //BTMSPK_CancelGroupCreation();
+                            BTMSPK_CancelGroup();
+							Broadcast_go_to_slave_flag = true;
+					
                             break;
                     }
             }

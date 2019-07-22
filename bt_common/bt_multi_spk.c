@@ -225,15 +225,15 @@ void BTMSPK_EventHandler( BT_MSPK_EVENTS event, uint8_t* paras, uint16_t size )
 						User_SetLedPattern(led_bt_status_off);//add  MSPK_CONNECTING timeout display by zx
 						User_Log("MSPK_CONNECTING timeout \n");
 					}
-					#if 0
+					#if 1
 					else if(
-						(BT_eCSBStatus.nspk_status == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) ||
+						//(BT_eCSBStatus.nspk_status == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) ||
 						(BT_eCSBStatus.nspk_status == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE)
 
 					)
 					{
 						//User_LedBroadcastConnectedOFF();
-						//User_SetLedPattern(led_bt_status_off);//add  MSPK_CONNECTING timeout display by zx
+						User_SetLedPattern(led_broadcast_connect_off);//add  MSPK_CONNECTING timeout display by zx
 					}
 					#endif
                     uint8_t pa = 0;
@@ -277,7 +277,7 @@ void BTMSPK_EventHandler( BT_MSPK_EVENTS event, uint8_t* paras, uint16_t size )
                     {
 						User_Log("BT_CSB_EVENT_LOSS\n");
 						//User_LedBroadcastConnectedOFF();
-						//User_SetLedPattern(led_bt_status_off);
+						User_SetLedPattern(led_broadcast_connect_off);
                         BT_eCSBStatus.nspk_status = BT_CSB_STATUS_STANDBY;	
                         BTAPP_EventHandler(BT_EVENT_MSPK_STANDBY, 0, 0);  
                     }
@@ -444,7 +444,8 @@ void BTMSPK_CancelGroup( void )
     if( BT_eCSBStatus.nspk_status != BT_CSB_STATUS_STANDBY )
     {
         BT_MMI_ActionCommand ( 0xE5, 0 );     //cancel/terminate NSPK link
-        User_LedBroadcastConnectedOFF();
+        //User_LedBroadcastConnectedOFF();
+        User_SetLedPattern(led_broadcast_connect_off);
     }
 }
 

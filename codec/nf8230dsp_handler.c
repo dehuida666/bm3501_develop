@@ -5,6 +5,9 @@
 #include "bt_app.h"
 #include "nf8230dsp_handler.h"
 #include "bt_command_send.h"
+#include "user_tone.h"
+
+
 
 #if defined (__XC32__)      //PIC32 harmony based driver
 
@@ -973,7 +976,7 @@ static void ntp8230g_set_master_volume_MAX_temp()
 	I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[VOL_MAX - 1] - 40);
 }
 
-static void ntp8230g_set_master_volume_temp(uint8_t vol)
+void ntp8230g_set_master_volume_temp(uint8_t vol)
 {
 	if(!is_ntp8230g_ready())
 		return;
@@ -1353,6 +1356,7 @@ void NF8230dsp_task(void)
 	{
 		ringTone_1msTimeOutFlag = false;
 		set_master_volume_temp_Flag = false;
+		NF8230dsp_SetBQOnOff(ON);
 		ntp8230g_set_master_volume(volume_master_step);
 		User_Log("Ring tone timeout\n");
 	}
@@ -1478,16 +1482,33 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 		if(set_master_volume_temp_Flag == true){
 			User_Log("Ringtone playback is going to be stopped\n");
 			set_master_volume_temp_Flag = false;
+			NF8230dsp_SetBQOnOff(ON);
 			ntp8230g_set_master_volume(volume_master_step);
 			ringTone_1msTimer = 0;
 			ringTone_1msTimeOutFlag = false;
+			Tone_playPowerOnFlag = false;
 		}
 	}
 	else//Ringtone playback is going to start
 	{
 		User_Log("Ringtone playback is going to start\n");
 		if(set_master_volume_temp_Flag == false){
-			ntp8230g_set_master_volume_temp(vol_tone);
+			if(Ringtone_Mode == 0xff){
+				if(Tone_playPowerOnFlag){
+					User_Log("power on tone volume set\n");
+					ntp8230g_set_master_volume_temp(12);
+					Tone_playPowerOnFlag = false;
+				}
+				else
+					ntp8230g_set_master_volume_temp(vol_tone);
+				
+			}
+			else if(Ringtone_Mode == TONE_PowerOff)
+				ntp8230g_set_master_volume_temp(10);
+			else
+				ntp8230g_set_master_volume_temp(vol_tone);
+			
+			NF8230dsp_SetBQOnOff(OFF);
 			set_master_volume_temp_Flag = true;
             
 #if 1
@@ -1516,6 +1537,11 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 
 
 
+bool User_IsRingToneStopped(void)
+{
+	return (!set_master_volume_temp_Flag);
+
+}
 
 
 

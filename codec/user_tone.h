@@ -28,6 +28,7 @@ void BTMTONE_EventHandler( BT_TTS_EVENTS event, uint8_t* paras, uint16_t size );
 void Tone_PlayPowerOn(void);
 void Tone_PlayBTPairing(void);
 
+bool Tone_playPowerOnFlag;
 
 
 #endif

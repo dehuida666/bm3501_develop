@@ -160,8 +160,7 @@ extern void User_LedBroadcastConnectedON();
 extern void User_LedClearPDLOFF();
 
 void User_LedPrimaryPairingOFF();
-
-
+void User_LedPowerIndicate(bool on_off);
 
 void TM1812_Test(void);
 

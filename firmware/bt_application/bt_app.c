@@ -118,6 +118,9 @@ bool resetAllVolumeFlag = false;
 uint16_t resetAllVolume_timer1ms = 0;
 bool resetAllVolumeTimeOutFlag = false;
 
+uint16_t batteryDisplayDelay_timer1ms = 0;
+bool batteryDisplayDelayTimeOutFlag = false;
+
 
 //DC detect, 2019-6-29 >>
 //variables declaration
@@ -337,7 +340,7 @@ void BTAPP_Task(void) {
 			{
 				currentBatteryLevel = User_GetCurrentBatteryLevel();
 			}
-			BT_UpdateBatteryLevel(currentBatteryLevel);      //battery level init set to 100%
+			//BT_UpdateBatteryLevel(currentBatteryLevel);      //battery level init set to 100%
             //BTVOL_InitVolMode();
 #endif            
             //BTAPP_timer1ms = 2000;
@@ -503,13 +506,13 @@ void BTAPP_Task(void) {
 				        BTAPP_TaskState = BT_STATE_BT_RUNNING;
 				        break;
 				    case 4:     //broadcast master
-				    	User_SetLedPattern(led_broadcast_master);
+				    	//User_SetLedPattern(led_broadcast_master);
 				        BTMSPK_TriggerConcertModeMaster();
 						
 				        BTAPP_TaskState = BT_STATE_BT_RUNNING;
 				        break;
 				    case 5:     //broadcast slave
-				    	User_SetLedPattern(led_broadcast_slave);
+				    	//User_SetLedPattern(led_broadcast_slave);
 				        BTMSPK_TriggerConcertModeSlave();
 						
 				        BTAPP_TaskState = BT_STATE_BT_RUNNING;
@@ -539,6 +542,8 @@ void BTAPP_Task(void) {
             break;
 
         case BT_STATE_POWER_OFF_START:
+			if(!User_IsRingToneStopped())
+				break;
             if(BT_IsCommandSendTaskIdle()){
                 if( BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_NSPK_MASTER            //NSPK master
                         || BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_NSPK_SLAVE      //NSPK slave
@@ -672,6 +677,12 @@ void BTAPP_Task(void) {
 			//User_PowerOffEvent();
 		}
 
+		if(batteryDisplayDelayTimeOutFlag == true)
+		{
+			batteryDisplayDelayTimeOutFlag = false;
+			BT_UpdateBatteryLevel(currentBatteryLevel);
+		}
+
 		if(sys_timer100msTimeOutFlag)
 		{
 			sys_timer100msTimeOutFlag = false;			
@@ -764,10 +775,12 @@ void BT_LinkbackTask( void )
     switch(BT_LinkBackTaskState)
     {
         case BT_LINKBACK_TASK_START:
+			User_Log("BT_LINKBACK_TASK_START\n");
             BT_LinkBackTarget = 1;
             BT_LinkBackTaskState = BT_LINKBACK_TASK_LB;
             break;
         case BT_LINKBACK_TASK_LB:
+			User_Log("BT_LINKBACK_TASK_LB\n");
             flag = false;
             for(i = 0; i< BTAPP_Status.pairedRecordNumber; i++)
             {
@@ -791,6 +804,7 @@ void BT_LinkbackTask( void )
         case BT_LINKBACK_TASK_LB_WAIT:
             if(!BT_LinkBackTimeWait)
             {
+				User_Log("BT_LINKBACK_TASK_LB_WAIT\n");
                 BT_LinkBackTarget++;
                 if(BT_LinkBackTarget > BTAPP_Status.pairedRecordNumber)
                     BT_LinkBackTarget = 1;
@@ -1046,8 +1060,28 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
                     ;//BT_LinkbackTaskStart();
             }
 #endif
-//linkback to all device, diffin, 2019-6-18 <<				
-			User_LedBroadcastConnectedOFF();
+//linkback to all device, diffin, 2019-6-18 <<		
+
+			if(Broadcast_go_to_slave_flag)
+			{
+				Broadcast_go_to_slave_flag = false;
+				ACL_disconnect_flag = false;
+                if(BTAPP_isBTConnected()){
+					BT_DisconnectAllProfile();
+					ACL_disconnect_flag = true;
+                }
+				else
+                	BTMSPK_TriggerConcertModeSlave();
+			}
+
+			if(Broadcast_go_to_master_flag)
+			{
+				Broadcast_go_to_master_flag = false;
+				BTMSPK_TriggerConcertModeMaster();
+				
+			}
+			//User_LedBroadcastConnectedOFF();
+			//User_SetLedPattern(led_broadcast_connect_off);
 			User_Log("BT_EVENT_MSPK_STANDBY\n");
 			
 			//User_SetLedPattern(led_off);
@@ -1066,7 +1100,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 #endif              
             break;
         case BT_EVENT_MSPK_CONNECTING:
-			//BT_PlayTone(TONE_BroadcastPairing);
+			BT_PlayTone(TONE_BroadcastPairing);
 			User_Log("BT_EVENT_MSPK_CONNECTING\n");
 			
 #ifdef _UNSUPPORT_3A_EVENT   
@@ -1118,8 +1152,8 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 #endif
             break;
         case BT_EVENT_MSPK_CONNECTED_AS_BROADCAST_MASTER:
-			BT_PlayTone(TONE_Connected);
-			User_SetLedPattern(led_broadcast_connect);
+			//BT_PlayTone(TONE_Connected);
+			User_SetLedPattern(led_broadcast_connect_master);
 			//User_LedBroadcastConnectedON();
 			User_Log("BT_EVENT_MSPK_CONNECTED_AS_BROADCAST_MASTER\n");
 //linkback to all device, diffin, 2019-6-18 >>		
@@ -1142,8 +1176,8 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_MSPK_CONNECTED_AS_BROADCAST_SLAVE:
 			//User_LedBroadcastConnectedON();
-			BT_PlayTone(TONE_Connected);
-			User_SetLedPattern(led_broadcast_connect);
+			//BT_PlayTone(TONE_Connected);
+			User_SetLedPattern(led_broadcast_connect_slave);
 			User_Log("BT_EVENT_MSPK_CONNECTED_AS_BROADCAST_SLAVE\n");
             
 #ifdef _BLE_ADV_CTRL_BY_MCU
@@ -1158,7 +1192,8 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
         case BT_EVENT_MSPK_BROADCAST_MASTER_CONNECTING_MORE:
 			//Set_LED_Style(LED_BROADCASTP, LED_ON, 500, 500);
 			
-			User_SetLedPattern(led_broadcast_master);
+			User_SetLedPattern(led_broadcast_master_connecting);
+			
 			User_Log("BT_EVENT_MSPK_BROADCAST_MASTER_CONNECTING_MORE\n");
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app
             //BLE_advUpdateGroupStatus(SPEAKER_BROADCAST_MASTER_ADDING);
@@ -1169,8 +1204,8 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 #endif             
             break;
         case BT_EVENT_MSPK_BROADCAST_MASTER_CONNECTING_END:
-			User_LedPrimaryPairingOFF();
-			User_SetLedPattern(led_bt_status_off);
+			//User_LedPrimaryPairingOFF();
+			User_SetLedPattern(led_broadcast_connect_master);
 			User_Log("BT_EVENT_MSPK_BROADCAST_MASTER_CONNECTING_END\n");
      
             //if( BTAPP_Status.status == BT_SYSTEM_STANDBY && BTAPP_Status.groupLinkingBack == true)
@@ -1203,7 +1238,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 
         case BT_EVENT_HFP_LINK_CONNECTED:
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
-			BT_UpdateBatteryLevel(currentBatteryLevel);
+			batteryDisplayDelay_timer1ms = 1000;
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
             #endif
@@ -1213,7 +1248,6 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
                 BLE_forceUpdate();
 #endif
 
-			//BT_UpdateBatteryLevel(currentBatteryLevel);
             break;
         case BT_EVENT_HFP_LINK_DISCONNECTED:
 			User_Log("BT_EVENT_HFP_LINK_DISCONNECTED\n");
@@ -1234,7 +1268,15 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_A2DP_LINK_CONNECTED:			
         case BT_EVENT_A2DP_LINK_CHANGED:
-			User_SetLedPattern(led_bt_status_off);
+			if(
+				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
+				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+
+			)
+			{
+				User_SetLedPattern(led_bt_status_off);
+			}
+			
 			BT_PlayTone(TONE_Connected);
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
 			if(BT_EVENT_A2DP_LINK_CONNECTED == event)
@@ -1261,9 +1303,9 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 
 		case BT_EVENT_ACL_DISCONNECTED:
 			User_Log("BT_EVENT_A2DP_LINK_DISCONNECTED\n");
-			if(Broadcast_disconnect_flag)
+			if(ACL_disconnect_flag)
 			{
-				Broadcast_disconnect_flag = false;
+				ACL_disconnect_flag = false;
 				BTMSPK_TriggerConcertModeSlave();
 			}
 			break;
@@ -1272,6 +1314,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			User_sys_nosignal_time = 0;
             BTAPP_Status.status = BT_SYSTEM_POWER_ON;
             User_SetLedPattern(led_power);
+			User_LedPowerIndicate(ON);
 			User_Log("BT_EVENT_SYS_POWER_ON\n");
             
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app            
@@ -1285,7 +1328,8 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			User_SetLedPattern(led_voloff);
 			User_LedPrimaryPairingOFF();
 			User_SetLedPattern(led_bt_status_off);
-			User_LedBroadcastConnectedOFF();
+			User_LedPowerIndicate(OFF);
+			//User_LedBroadcastConnectedOFF();
 			User_LedClearPDLOFF();
 			User_Log("BT_EVENT_SYS_POWER_OFF\n");
 			
@@ -1320,12 +1364,26 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			
             break;
         case BT_EVENT_SYS_PAIRING_FAILED:			
-            User_SetLedPattern(led_bt_status_off);
+            if(
+				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
+				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+
+			)
+			{
+				User_SetLedPattern(led_bt_status_off);
+			}
 			User_Log("BT_EVENT_SYS_PAIRING_FAILED\n");
             break;
 
         case BT_EVENT_LINKBACK_SUCCESS:
-			User_SetLedPattern(led_bt_status_off);
+			if(
+				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
+				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+
+			)
+			{
+				User_SetLedPattern(led_bt_status_off);
+			}
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
             #endif
@@ -1333,7 +1391,14 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
 
         case BT_EVENT_LINKBACK_FAILED:
-            User_SetLedPattern(led_bt_status_off);	
+            if(
+				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
+				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+
+			)
+			{
+				User_SetLedPattern(led_bt_status_off);
+			}	
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskNext(); //linkback to all device, diffin, 2019-6-18
             #endif
@@ -1579,6 +1644,15 @@ void BTAPP_Timer1MS_event( void )
 		{
 			btDelayToChangeVolModeTimeOutFlag = true;
 		}
+	}
+
+
+	if(batteryDisplayDelay_timer1ms)
+	{
+		batteryDisplayDelay_timer1ms--;
+		if(batteryDisplayDelay_timer1ms == 0)
+			batteryDisplayDelayTimeOutFlag = true;
+
 	}
 }
 

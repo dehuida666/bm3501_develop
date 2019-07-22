@@ -69,6 +69,9 @@ extern void Ntp8230g_RestoreTrebleAndBass(void);
 extern void NF8230dsp_SetLChannelOnOff(bool on_off);
 extern void NF8230dsp_SetBQOnOff(bool on_off);
 
+bool User_IsRingToneStopped(void);
+
+void ntp8230g_set_master_volume_temp(uint8_t vol);
 
 
 #endif      //_DSP_HANDLER_H_

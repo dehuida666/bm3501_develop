@@ -8,6 +8,7 @@
 #include "bt_hfp.h"
 #include "bt_hardware_profile.h"
 #include "bt_app.h"
+#include "bt_multi_spk.h"
 
 
 
@@ -21,6 +22,11 @@ bool ledvolumeTimeOutFlag = false;
 uint8_t ledvolume0_timer1ms = 0;
 bool ledvolume0TimeOutFlag = false;
 uint8_t ledvolume0_blink_cnt = 0;
+
+uint8_t ledvolume16_timer1ms = 0;
+bool ledvolume16TimeOutFlag = false;
+uint8_t ledvolume16_blink_cnt = 0;
+
 
 uint16_t ledClrPdl_timer1ms = 0;
 bool ledClrPdlTimeOutFlag = false;
@@ -43,6 +49,15 @@ static display_volume0_start()
 
 }
 
+static display_volume16_start()
+{
+	ledvolume16_timer1ms = 200;
+	ledvolume16_blink_cnt = 6;
+	ledvolume16TimeOutFlag = false;
+
+}
+
+
 /*-----------------------------------------------------------------
 */
 
@@ -63,6 +78,15 @@ void TM1812_timer_1ms()
        if(ledvolume0_timer1ms == 0)
        {
            ledvolume0TimeOutFlag = true;
+       }
+    }
+
+	if(ledvolume16_timer1ms)
+    {
+       --ledvolume16_timer1ms;
+       if(ledvolume16_timer1ms == 0)
+       {
+           ledvolume16TimeOutFlag = true;
        }
     }
 
@@ -95,6 +119,10 @@ void TM1812_LEDInit(void)
 	ledvolume0_timer1ms = 0;
 	ledvolume0TimeOutFlag = false;
 	ledvolume0_blink_cnt = 0;
+
+	ledvolume16_timer1ms = 0;
+	ledvolume16TimeOutFlag = false;
+	ledvolume16_blink_cnt = 0;
 
 	ledClrPdl_timer1ms = 0;
 	ledClrPdlTimeOutFlag = false;
@@ -370,6 +398,7 @@ static void power_led_indicate(bool on_off)
 		}
 		else if(count == 300)		// 3s
 		{
+			ledData = 0xff;
 			led_on_off(ledData,OFF);
 			count++;
 		}
@@ -556,6 +585,46 @@ static void broadcast_secondary_pairing_led_indicate(bool on_off)
 	}
 }
 
+static void power_on_off_led_indicate(bool on_off)
+{
+	if(on_off)
+		led_on_off(LED_BROADCAST_MASK,ON);	
+	else
+		led_on_off(LED_BROADCAST_MASK,OFF);	
+}
+
+static void broadcast_connected_led_master_indicate(bool on_off)
+{
+	if(on_off){
+		led_on_off(LED_VMASTER_MASK,ON);	
+		led_on_off(LED_VTREBLE_MASK,ON);
+		led_on_off(LED_VBASS_MASK,ON);
+	}
+	else{
+		led_on_off(LED_VMASTER_MASK,OFF);	
+		led_on_off(LED_VTREBLE_MASK,OFF);
+		led_on_off(LED_VBASS_MASK,OFF);
+	}
+
+}
+
+static void broadcast_connected_led_slave_indicate(bool on_off)
+{
+	if(on_off){
+		led_on_off(LED_VMASTER_MASK,OFF);	
+		led_on_off(LED_VTREBLE_MASK,ON);
+		led_on_off(LED_VBASS_MASK,ON);
+	}
+	else{
+		led_on_off(LED_VMASTER_MASK,OFF);	
+		led_on_off(LED_VTREBLE_MASK,OFF);
+		led_on_off(LED_VBASS_MASK,OFF);
+	}
+
+}
+
+
+#if 0
 static void broadcast_connected_led_indicate(bool on_off)
 {
 	if(on_off)
@@ -563,6 +632,8 @@ static void broadcast_connected_led_indicate(bool on_off)
 	else
 		led_on_off(LED_BROADCAST_MASK,OFF);	
 }
+
+#endif
 
 static void vmaster_led_indicate(bool on_off)
 {
@@ -646,6 +717,7 @@ static void hfp_open_led_Indicate(bool on_off)
 static void User_LedPatternIndicateOFF()
 {
 	power_led_indicate(OFF);
+	//User_LedPowerIndicate(OFF);
 	enter_bt_pairing_led_indicate(OFF);
 	//broadcast_primary_pairing_led_indicate(OFF);
 	broadcast_secondary_pairing_led_indicate(OFF);
@@ -673,19 +745,32 @@ void User_LedPrimaryPairingOFF()
 	User_Log("User_LedPrimaryPairingOFF\n");
 	broadcast_primary_pairing_led_indicate(OFF);
 }
+void User_LedBroadcastConnectedMasterOFF()
+{
+	User_Log("User_LedBroadcastConnectedMasterOFF\n");
+	//broadcast_connected_led_master_indicate(OFF);
+}
+
+void User_LedBroadcastConnectedSlaveOFF()
+{
+	User_Log("User_LedBroadcastConnectedSlaveOFF\n");
+	//broadcast_connected_led_slave_indicate(OFF);
+}
+
+
+
 void User_LedBroadcastConnectedOFF()
 {
-	User_Log("User_LedBroadcastConnectedOFF\n");
-	broadcast_connected_led_indicate(OFF);
-}
-
-
-void User_LedBroadcastConnectedON()
-{
 	User_Log("User_LedBroadcastConnectedON\n");
-	broadcast_connected_led_indicate(ON);
+	//broadcast_connected_led_indicate(ON);
+	broadcast_connected_led_master_indicate(OFF);
 }
 
+void User_LedPowerIndicate(bool on_off)
+{
+	power_on_off_led_indicate(on_off);
+
+}
 
 
 
@@ -715,12 +800,33 @@ void User_LedPatternDisplay()
 			broadcast_primary_pairing_led_indicate(ON);
 			break;
 
+		case led_broadcast_master_connecting:
+			broadcast_primary_pairing_led_indicate(ON);
+			broadcast_connected_led_master_indicate(ON);
+			break;
+
 		case led_broadcast_slave:
 			broadcast_secondary_pairing_led_indicate(ON);
 			break;
-
+#if 0
 		case led_broadcast_connect:
 			broadcast_connected_led_indicate(ON);
+			led_effect_index = led_none;
+			break;
+#endif
+
+		case led_broadcast_connect_master:
+			broadcast_connected_led_master_indicate(ON);
+			//led_effect_index = led_none;
+			break;
+
+		case led_broadcast_connect_slave:
+			broadcast_connected_led_slave_indicate(ON);
+			//led_effect_index = led_none;
+			break;
+
+		case led_broadcast_connect_off:
+			broadcast_connected_led_slave_indicate(OFF);
 			led_effect_index = led_none;
 			break;
 
@@ -804,6 +910,14 @@ void User_DisplayVolumeLevel()
 		{
 			led_on_off(0xff,OFF);
 			display_volume0_start();//blink 3 times
+			//User_Log("volume_master_step = %d\n", volume_master_step);
+			return;
+
+		}
+		else if(step == 16)
+		{
+			led_on_off(0xff,ON);
+			display_volume16_start();//blink 3 times
 			//User_Log("volume_master_step = %d\n", volume_master_step);
 			return;
 
@@ -893,7 +1007,19 @@ void User_ReturnDisLEDBTStatus()
 {
 	if(!ledvolume_timer1ms)
 	{
-		if(led_effect_index_prev <= led_bt_status_off)
+		if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER)
+		{
+			User_SetLedPattern(led_broadcast_connect_master);
+		}
+		else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+		{
+			User_SetLedPattern(led_broadcast_master_connecting);
+		}
+		else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE)
+		{
+			User_SetLedPattern(led_broadcast_connect_slave);
+		}
+		else if(led_effect_index_prev <= led_bt_status_off)
 			User_SetLedPattern(led_effect_index_prev);
 
 	}
@@ -942,6 +1068,33 @@ void tm1812_task()
 		}
 
 	}
+
+	if(ledvolume16TimeOutFlag)//volume level 16
+	{
+		ledvolume16TimeOutFlag = false;
+		if(ledvolume16_blink_cnt)
+		{
+			ledvolume16_blink_cnt--;
+			if((ledvolume16_blink_cnt % 2) == 0)
+			{
+				led_on_off(1 << 7,ON);
+			}
+			else
+			{
+				led_on_off(1 << 7,OFF);
+			}
+
+			
+
+			if(ledvolume16_blink_cnt != 0)
+				ledvolume16_timer1ms = 100;
+			
+
+		}
+
+	}
+
+	
 
 	if(ledClrPdlTimeOutFlag)
 	{
