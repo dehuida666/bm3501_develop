@@ -238,6 +238,8 @@ extern uint16_t User_sys_nosignal_time;
 
 uint8_t currentBatteryLevel;
 
+bool BT_button_manual_enter_pairing_flag;
+bool BT_button_manual_reconnect_flag;
 
 uint8_t BTAPP_GetStatus(void);
 
@@ -288,6 +290,8 @@ void BT_LinkbackTaskNext ( void );
 void BT_LinkbackTaskStop ( void );
 bool BT_LinkbackTaskRunning ( void );
 void BT_LinkbackTask( void );
+void BT_LinkbackTaskNextStart ( void );
+
 #endif
 //linkback to all device, diffin, 2019-6-18 <<
 

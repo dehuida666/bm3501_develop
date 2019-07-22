@@ -372,6 +372,8 @@ void BTMSPK_TriggerConcertModeMaster( void )
     {
         BT_MMI_ActionCommand ( 0xF5, 0 );
         BT_MMI_ActionCommand(MASTERSPK_ENTER_CSB_PAGE, 0 );
+		if(BTAPP_isBTConnected())
+			BT_button_manual_enter_pairing_flag = false;
 
 		User_SetLedPattern(led_broadcast_master);
 		User_Log("BTMSPK_TriggerConcertModeMaster\n");
@@ -388,9 +390,12 @@ void BTMSPK_TriggerConcertModeSlave( void )
     {
         BT_MMI_ActionCommand ( 0xF5, 0 );
         BT_MMI_ActionCommand(SLAVESPK_ENTER_CSB_PAGESCAN, 0 );
+		if(BTAPP_isBTConnected())
+			BT_button_manual_enter_pairing_flag = false;
 
 		User_SetLedPattern(led_broadcast_slave);
 		User_Log("BTMSPK_TriggerConcertModeSlave\n");
+		
     }
 }
 

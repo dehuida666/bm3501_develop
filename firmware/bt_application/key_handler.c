@@ -73,21 +73,43 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 			if(event == KEY_EVENT_PRIMARY )//Toggle BT sources
 			{
 				User_Log("BT key sp\n");
+				User_Log("User_GetPairedRecordNumber = %d\n",User_GetPairedRecordNumber());
 				if(BTAPP_isBTConnected())
-				//if( BTMHFP_GetHFPLinkStatus( BTMHFP_GetDatabaseIndex()) || BTMA2DP_getA2DPLinkStatus(BTMA2DP_getActiveDatabaseIndex()))
 				{
-					if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_STANDBY)
-						;//BTMHFP_ToggleActiveDevice();
+					if(User_GetPairedRecordNumber() > 1){
+						if((BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) || (BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_STANDBY))
+						{
+							BT_DisconnectAllProfile();
+							BT_button_manual_enter_pairing_flag = false;
+							BT_button_manual_reconnect_flag = true;
+
+						}
+						
+					}
 				}
 				else
 				{
 					if(User_GetPairedRecordNumber())
 					{
 						if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE)
+						{
 							BTMSPK_CancelGroup();
+							//User_LinkBackToBTDevice();
+							BT_LinkbackTaskStart();
+						}
+						else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER)
+						{
+							if(!BT_LinkbackTaskRunning())
+								BT_LinkbackTaskStart();
+
+						}
+						else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_STANDBY)
+						{
+							BT_LinkbackTaskStart();
+
+						}
 						
-						//User_LinkBackToBTDevice();
-						BT_LinkbackTaskStart();
+						
 					}
 
 				}
@@ -115,13 +137,16 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 						BTMSPK_CancelGroup();
 					}
 					BTAPP_EnterBTPairingMode();
+					if(BTAPP_isBTConnected())
+						BT_button_manual_enter_pairing_flag = false;
 					User_Log("BT pairing\n");
                 }
 				else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE )
 				{
 					BTMSPK_CancelGroup();
 					BTAPP_EnterBTPairingMode();
-
+					if(BTAPP_isBTConnected())
+						BT_button_manual_enter_pairing_flag = false;
 				}
 
 			}
@@ -384,6 +409,8 @@ void KEY_Handler ( uint8_t key, uint8_t event )
                             if(BTAPP_isBTConnected()){
 								BT_DisconnectAllProfile();
 								ACL_disconnect_flag = true;
+								BT_button_manual_enter_pairing_flag = false;
+								BT_button_manual_reconnect_flag = false;
                             }
 							else
                             	BTMSPK_TriggerConcertModeSlave();
@@ -402,6 +429,10 @@ void KEY_Handler ( uint8_t key, uint8_t event )
                         case BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER:
 							BTMSPK_CancelGroup();
 							Broadcast_go_to_slave_flag = true;	
+							if(BTAPP_isBTConnected()){
+								BT_button_manual_enter_pairing_flag = false;
+								BT_button_manual_reconnect_flag = false;
+                            }
 							
 							//BTMSPK_AddMoreSpeaker();
 							break;
@@ -413,6 +444,10 @@ void KEY_Handler ( uint8_t key, uint8_t event )
                             //BTMSPK_CancelGroupCreation();
                             BTMSPK_CancelGroup();
 							Broadcast_go_to_slave_flag = true;
+							if(BTAPP_isBTConnected()){
+								BT_button_manual_enter_pairing_flag = false;
+								BT_button_manual_reconnect_flag = false;
+                            }
 					
                             break;
                     }
