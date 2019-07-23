@@ -50,7 +50,7 @@ void User_BatteryManagementTask(void)
 	if(detect_timer100msTimeOutFlag)
 	{
 		detect_timer100msTimeOutFlag = false;
-		//ntc_adValueHandle();
+		ntc_adValueHandle();
 		battery_chargeHandle();
 		USB_chargeHandle();
 
@@ -71,7 +71,7 @@ static uint16_t usb_getAdVaule(void)
 	return usb_adValue;
 
 }
-static void usb_calculateAdValue(void)
+static void usb_calculateAdValue(bool on_off)
 {
 	uint16_t adValue;
 	static uint16_t usb_detect_value[10] = {0};
@@ -79,33 +79,41 @@ static void usb_calculateAdValue(void)
 	uint16_t usb_detectValueAvrg = 0;
 	uint8_t i;
 
-	adValue = usb_getAdVaule();
-		
-	usb_detect_value[usb_detect_cnt++] = adValue;
+	if(on_off)
+	{
+		adValue = usb_getAdVaule();
+			
+		usb_detect_value[usb_detect_cnt++] = adValue;
 
-	if(usb_detect_cnt >= 10)
+		if(usb_detect_cnt >= 10)
+		{
+			usb_detect_cnt = 0;
+			for(i =0; i < 10; i++)
+			{
+				usb_detectValueAvrg += usb_detect_value[i];
+			}
+
+			usb_detectValueAvrg = usb_detectValueAvrg/10;
+
+			User_Log("USB Chrage value = %d\n",usb_detectValueAvrg);
+
+			if(usb_detectValueAvrg == 0)//Charge complete
+			{
+				if(!isUSBChargeComplete)
+					isUSBChargeComplete = true;
+			}
+			else
+			{
+				if(isUSBChargeComplete)
+					isUSBChargeComplete = false;
+			}		
+
+		}
+	}
+	else
 	{
 		usb_detect_cnt = 0;
-		for(i =0; i < 10; i++)
-		{
-			usb_detectValueAvrg += usb_detect_value[i];
-		}
-
-		usb_detectValueAvrg = usb_detectValueAvrg/10;
-
-		User_Log("USB Chrage value = %d\n",usb_detectValueAvrg);
-
-		if(usb_detectValueAvrg == 0)//Charge complete
-		{
-			if(!isUSBChargeComplete)
-				isUSBChargeComplete = true;
-		}
-		else
-		{
-			if(isUSBChargeComplete)
-				isUSBChargeComplete = false;
-		}		
-
+		isUSBChargeComplete = false;
 	}
 
 }
@@ -122,7 +130,8 @@ static void USB_chargeHandle(void)
 
 	}
 	else
-	{		
+	{
+		#if 0
 		if(DC_PULL_OUT){
 			if(currentBatteryLevel <= 40)
 			{
@@ -142,19 +151,23 @@ static void USB_chargeHandle(void)
 		}
 
 		return;
+		#else
 		
 		if(IS_USB_CHARGE_Enable)//detect adc 
 		{
-			usb_calculateAdValue();
+			usb_calculateAdValue(ON);
 			if(USB_isChargecomplete())
 			{
 				USB_CHARGE_SetDisable();
+				User_Log("USB_CHARGE_SetDisable\n");
 			}
 			else
 			{
 				if(DC_PULL_OUT){
-					if(currentBatteryLevel <= 40)
+					if(currentBatteryLevel <= 40){
 						USB_CHARGE_SetDisable();
+						User_Log("USB_CHARGE_SetDisable\n");
+					}
 				}
 
 			}
@@ -166,15 +179,21 @@ static void USB_chargeHandle(void)
 				if(!DC_PULL_OUT)
 				{
 					USB_CHARGE_SetEnable();
+					usb_calculateAdValue(OFF);
+					User_Log("USB_CHARGE_SetEnable\n");
 				}
 				else{
-					if(currentBatteryLevel > 40)
+					if(currentBatteryLevel > 40){
 						USB_CHARGE_SetEnable();
+						usb_calculateAdValue(OFF);
+						User_Log("USB_CHARGE_SetEnable\n");
+					}
 				}
 			}
 
 		}
 		
+		#endif		
 	}
 
 }

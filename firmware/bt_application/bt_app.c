@@ -1270,6 +1270,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
             #endif
+			BT_UpdateBatteryLevel(currentBatteryLevel);
 			User_Log("BT_EVENT_HFP_LINK_CONNECTED\n");
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app            
             if(BLE_advUpdateBTMState(BLE_BTM_CONN_ALL))
@@ -1303,16 +1304,18 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			)
 			{
 				User_SetLedPattern(led_bt_status_off);
-			}
+			}			
 			
-			BT_PlayTone(TONE_Connected);
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
-			if(BT_EVENT_A2DP_LINK_CONNECTED == event)
+			//if(BT_EVENT_A2DP_LINK_CONNECTED == event)
 			{
-              if(BT_IsCommandSendTaskIdle()){
+              if(BT_IsCommandSendTaskIdle())
+			  {
                 BT_GetPairRecordCommand();
               }
 			}
+
+			BT_PlayTone(TONE_Connected);
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18   
             #endif
@@ -1483,6 +1486,10 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
                 BTAPP_PairRecord[i].linkBdAddress[3] = *paras++;
                 BTAPP_PairRecord[i].linkBdAddress[4] = *paras++;
                 BTAPP_PairRecord[i].linkBdAddress[5] = *paras++;
+
+				User_Log("BTAPP_PairRecord[%d].linkPriority = %d\n",i, BTAPP_PairRecord[i].linkPriority);
+				User_Log("BTAPP_PairRecord[%d].linkBdAddress[0] = %d\n",i, BTAPP_PairRecord[i].linkBdAddress[0]);
+				User_Log("BTAPP_PairRecord[%d].linkBdAddress[1] = %d\n",i, BTAPP_PairRecord[i].linkBdAddress[1]);
             }
 //linkback to all device, diffin, 2019-6-18 <<
 #else
