@@ -690,6 +690,7 @@ void BTAPP_Task(void) {
 		{
 			batteryDisplayDelayTimeOutFlag = false;
 			BT_UpdateBatteryLevel(currentBatteryLevel);
+			User_Log("BT_UpdateBatteryLevel = %d\n",currentBatteryLevel);
 		}
 
 		if(sys_timer100msTimeOutFlag)
@@ -1266,11 +1267,11 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 
         case BT_EVENT_HFP_LINK_CONNECTED:
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
-			batteryDisplayDelay_timer1ms = 1000;
+			batteryDisplayDelay_timer1ms = 2000;
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
             #endif
-			BT_UpdateBatteryLevel(currentBatteryLevel);
+			//BT_UpdateBatteryLevel(currentBatteryLevel);
 			User_Log("BT_EVENT_HFP_LINK_CONNECTED\n");
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app            
             if(BLE_advUpdateBTMState(BLE_BTM_CONN_ALL))
@@ -2078,8 +2079,10 @@ static void batteryDetect( void )
     //batteryIsCharging = CHARGE_STATUS_GET();
 
 	if(!DC_PULL_OUT){  //if charging , compensate for the adc value
-		if(bat_adc_value > Battery_ADC_Value_Compensation)
-			bat_adc_value -= Battery_ADC_Value_Compensation;
+		if(bat_adc_value > Battery_ADC_Value_Compensation){
+			if(bat_adc_value < 885)
+				bat_adc_value -= Battery_ADC_Value_Compensation;
+		}
 	}
 
 	bat_calculate_average_value(bat_adc_value);
@@ -2204,7 +2207,11 @@ static void bat_calculate_average_value (uint16_t ad_value)
 		if(BTAPP_isBTConnected())//( BTMHFP_GetHFPLinkStatus( BTMHFP_GetDatabaseIndex()) || BTMA2DP_getA2DPLinkStatus(BTMA2DP_getActiveDatabaseIndex()))
 		{
 			User_Log("BT_UpdateBatteryLevel = %d\n", currentBatteryLevel);
-			BT_UpdateBatteryLevel(currentBatteryLevel);
+			//BT_UpdateBatteryLevel(currentBatteryLevel);
+			if(batteryDisplayDelay_timer1ms == 0)
+			{
+				BT_UpdateBatteryLevel(currentBatteryLevel);
+			}
 		}
 		
 		
@@ -2225,7 +2232,10 @@ uint8_t User_GetCurrentBatteryLevel()
 	bat_adc_value = GetADCValue(ADC_INPUT_POSITIVE_AN2);
 	if(!DC_PULL_OUT){  //if charging , compensate for the adc value
 		if(bat_adc_value > Battery_ADC_Value_Compensation)
-			bat_adc_value -= Battery_ADC_Value_Compensation;
+		{
+			if(bat_adc_value < 885)
+				bat_adc_value -= Battery_ADC_Value_Compensation;
+		}
 	}
 	User_Log("bat_adc_value = %d\n",bat_adc_value);
 	return bat_convert_advalue_to_level(bat_adc_value);

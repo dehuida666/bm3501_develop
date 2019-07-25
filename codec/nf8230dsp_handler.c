@@ -35,7 +35,7 @@ DRV_I2C_BUFFER_HANDLE I2C_bufferHandle = NULL;
 #define bass_step 7
 #define VOLUME_0db 0xCF
 
-#define vol_tone   9
+#define vol_tone   11
 
 
 extern uint8_t I2C_limitedTimer;
@@ -1504,7 +1504,7 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 				
 			}
 			else if(Ringtone_Mode == TONE_PowerOff)
-				ntp8230g_set_master_volume_temp(10);
+				ntp8230g_set_master_volume_temp(vol_tone);
 			else
 				ntp8230g_set_master_volume_temp(vol_tone);
 			

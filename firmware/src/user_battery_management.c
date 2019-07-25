@@ -208,7 +208,7 @@ bool USB_isChargecomplete(void)
 *battery charge
 ********************************************************************************
 */
-bool Battery_isChargecomplete(void)
+bool Battery_isChargeComplete(void)
 {
 	return isBatteryChargeComplete;
 }
