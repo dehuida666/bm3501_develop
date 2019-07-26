@@ -40,7 +40,9 @@
 
 extern DRV_HANDLE UART_Handle;
 volatile uint16_t DFU_timer;
-bool ACL_disconnect_flag = false;
+bool ACL_disconnect_to_enter_slave_flag = false;
+bool ACL_disconnect_to_enter_master_flag = false;
+
 
 bool Broadcast_go_to_slave_flag = false;
 bool Broadcast_go_to_master_flag = false;
@@ -74,15 +76,31 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 			{
 				User_Log("BT key sp\n");
 				User_Log("User_GetPairedRecordNumber = %d\n",User_GetPairedRecordNumber());
+				User_Log("User_getLinkedDeviceNumber = %d\n",User_getLinkedDeviceNumber());
 				if(BTAPP_isBTConnected())
 				{
 					if(User_GetPairedRecordNumber() > 1){
-						if((BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) || (BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_STANDBY))
+						if((BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER))
 						{
 							BT_DisconnectAllProfile();
 							BT_button_manual_enter_pairing_flag = false;
-							BT_button_manual_reconnect_flag = true;
+							BT_button_manual_reconnect_to_X = 1;
 
+						}
+						else if(User_getLinkedDeviceNumber() < 2)
+						{
+							if(!BT_LinkbackTaskRunning())
+							{
+								BT_LinkbackTaskNextXStart(1);
+							}
+						}
+						else if(User_getLinkedDeviceNumber() == 2)
+						{
+							if(User_GetPairedRecordNumber() > 2){
+								BT_DisconnectAllProfile();
+								BT_button_manual_enter_pairing_flag = false;
+								BT_button_manual_reconnect_to_X = 2;
+							}
 						}
 						
 					}
@@ -366,7 +384,17 @@ void KEY_Handler ( uint8_t key, uint8_t event )
                     {
                         case BT_CSB_STATUS_STANDBY:
                             //BTMSPK_CreatStereoMode();
-                            if(BTMA2DP_getA2DPLinkStatus(BTMA2DP_getActiveDatabaseIndex()))
+                            //if(BTMA2DP_getA2DPLinkStatus(BTMA2DP_getActiveDatabaseIndex()))
+                            	//BTMSPK_TriggerConcertModeMaster();
+
+							ACL_disconnect_to_enter_master_flag = false;
+                            if(User_getLinkedDeviceNumber() == 2){
+								BT_DisconnectAllProfile();
+								ACL_disconnect_to_enter_master_flag = true;
+								BT_button_manual_enter_pairing_flag = false;
+								BT_button_manual_reconnect_to_X = 0;
+                            }
+							else if(User_getLinkedDeviceNumber() == 1)
                             	BTMSPK_TriggerConcertModeMaster();
                             break;
                         case BT_CSB_STATUS_CONNECTING:
@@ -405,12 +433,12 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 							BT_LinkbackTaskStop();//linkback to all device, diffin, 2019-6-18
 							#endif
                             //BTMSPK_CreatStereoMode();
-                            ACL_disconnect_flag = false;
+                            ACL_disconnect_to_enter_slave_flag = false;
                             if(BTAPP_isBTConnected()){
 								BT_DisconnectAllProfile();
-								ACL_disconnect_flag = true;
+								ACL_disconnect_to_enter_slave_flag = true;
 								BT_button_manual_enter_pairing_flag = false;
-								BT_button_manual_reconnect_flag = false;
+								BT_button_manual_reconnect_to_X = 0;
                             }
 							else
                             	BTMSPK_TriggerConcertModeSlave();
@@ -431,7 +459,7 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 							Broadcast_go_to_slave_flag = true;	
 							if(BTAPP_isBTConnected()){
 								BT_button_manual_enter_pairing_flag = false;
-								BT_button_manual_reconnect_flag = false;
+								BT_button_manual_reconnect_to_X = 0;
                             }
 							
 							//BTMSPK_AddMoreSpeaker();
@@ -446,7 +474,7 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 							Broadcast_go_to_slave_flag = true;
 							if(BTAPP_isBTConnected()){
 								BT_button_manual_enter_pairing_flag = false;
-								BT_button_manual_reconnect_flag = false;
+								BT_button_manual_reconnect_to_X = 0;
                             }
 					
                             break;

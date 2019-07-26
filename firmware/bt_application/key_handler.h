@@ -26,7 +26,9 @@
 
 void KEY_Handler ( uint8_t key, uint8_t event );
 void KeyHandlers_Timer1MS_event( void );
-bool ACL_disconnect_flag;
+bool ACL_disconnect_to_enter_slave_flag;
+bool ACL_disconnect_to_enter_master_flag;
+
 
 bool Broadcast_go_to_slave_flag;
 bool Broadcast_go_to_master_flag;

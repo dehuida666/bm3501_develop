@@ -521,6 +521,20 @@ void BT_DisconnectA2DPProfile(void)
     command[5] = calculateChecksum(&command[2], &command[4]);
     copyDataToBufferAndRegisterCommand(&command[0], 6);
 }
+
+/*------------------------------------------------------------*/
+void BT_CancelPage(void)   //add by zx
+{
+    uint8_t command[6];
+    command[0] = 0xAA;                      //header byte 0
+    command[1] = 0x00;                      //header byte 1
+    command[2] = 0x02;                      //length
+    command[3] = DISCONNECT;                //command ID
+    command[4] = 0x01;                      //event to ack
+    command[5] = calculateChecksum(&command[2], &command[4]);
+    copyDataToBufferAndRegisterCommand(&command[0], 6);
+}
+
 /*------------------------------------------------------------*/
 #ifdef _OTA_SUPPORT
 void BT_EnterOTA(void)

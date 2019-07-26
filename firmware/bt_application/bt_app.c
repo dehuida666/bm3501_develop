@@ -50,7 +50,7 @@ uint8_t BTAPP_TaskRequest;
 BTAPP_STATUS BTAPP_Status;        // BM64 internal system status
 
 bool BT_button_manual_enter_pairing_flag = true;
-bool BT_button_manual_reconnect_flag = false;
+uint8_t BT_button_manual_reconnect_to_X = 0;
 
 
 //linkback to all device, diffin, 2019-6-18 >>
@@ -210,7 +210,9 @@ void BTAPP_Init( void )
 	resetAllVolumeFlag = false;
 
 	BT_button_manual_enter_pairing_flag = true;
-	BT_button_manual_reconnect_flag = false;
+	BT_button_manual_reconnect_to_X = 0;
+
+	BTAPP_Status.linkedDeviceNumber = 0;
 
 }
 
@@ -398,7 +400,7 @@ void BTAPP_Task(void) {
             }
 			
 			if(!is_ntp8230g_ready())
-                return;
+                break;
 			
             BTVOL_InitVolMode();
 			
@@ -410,6 +412,7 @@ void BTAPP_Task(void) {
 				//BT_PlayTone(TONE_PowerOn);//power on	
 				//Tone_PlayPowerOn();
 				Tone_PlayVoicePrompt(TONE_PowerOn);
+				//Tone_PlayVoicePrompt(TONE_PowerOn);
 				User_Log("Send power on tone\n");
 				BTAPP_TaskState = BT_STATE_READ_LINKED_MODE;
 				BTAPP_timer1ms = 2000;
@@ -458,6 +461,7 @@ void BTAPP_Task(void) {
         case BT_STATE_LINKBACK_START:
             if(BTAPP_timer1ms)  //2019
                 break;//2019
+                
             if(BT_IsCommandSendTaskIdle())
             {
                 switch(BTAPP_Status.lastLinkedMode)
@@ -470,11 +474,13 @@ void BTAPP_Task(void) {
 // start linkback task to linkback to all device, not use original command, which is to linkback to last device.
 #ifdef RECONNECT_TO_PDL
 
-                            
-                            BT_LinkbackTaskStart();//BT_LinkBackTaskState = BT_LINKBACK_TASK_START;
+                            if(!BTM_LINE_IN_IsPlugged())
+                            	BT_LinkbackTaskStart();//BT_LinkBackTaskState = BT_LINKBACK_TASK_START;                            
 #else
 //linkback to all device, diffin, 2019-6-18 <<		
 							BT_LinkBackToLastDevice();
+							
+
 #endif
 
                             //BTAPP_TaskState = BT_STATE_LINKBACK_TO_LAST_DEVICE;
@@ -482,7 +488,8 @@ void BTAPP_Task(void) {
                         }
                         else
                         {
-                            BT_MMI_ActionCommand(ANY_MODE_ENTERING_PAIRING, 0);
+							if(!BTM_LINE_IN_IsPlugged())
+                            	BT_MMI_ActionCommand(ANY_MODE_ENTERING_PAIRING, 0);
                             //BT_LinkbackStatus = BT_PAIRING_START;
                             BTAPP_TaskState = BT_STATE_BT_RUNNING;
                         }
@@ -756,13 +763,14 @@ void BT_LinkbackTaskStart ( void )
         BT_LinkBackTaskState = BT_LINKBACK_TASK_START;
 }
 
-void BT_LinkbackTaskNextStart ( void )
+void BT_LinkbackTaskNextXStart ( uint8_t X_device)//start link back from the x addr, and  won't stop at last if x is last addr
 {
-    if(BTAPP_Status.status == BT_SYSTEM_STANDBY)    //start link back task only when BT link is standby
+    //if(BTAPP_Status.status == BT_SYSTEM_STANDBY)    //start link back task only when BT link is standby
         BT_LinkBackTaskState = BT_LINKBACK_TASK_NEXT_START;
+		BT_LinkBackTarget = X_device;
 }
 
-void BT_LinkbackTaskNext ( void )
+void BT_LinkbackTaskNext ( void )//start link back from the 2nd addr, and stop at last
 {
     BT_LinkBackTarget++;
     if(BT_LinkBackTarget > BTAPP_Status.pairedRecordNumber){
@@ -776,7 +784,9 @@ void BT_LinkbackTaskNext ( void )
 }
 void BT_LinkbackTaskStop ( void )
 {
+	BT_CancelPage();
     BT_LinkBackTaskState = BT_LINKBACK_TASK_IDLE;
+	BT_LinkBackTarget = 1;
 }
 bool BT_LinkbackTaskRunning ( void )
 {
@@ -789,6 +799,7 @@ void BT_LinkbackTask( void )
 {
     uint8_t i;
     bool flag;
+	
     switch(BT_LinkBackTaskState)
     {
         case BT_LINKBACK_TASK_START:
@@ -816,8 +827,8 @@ void BT_LinkbackTask( void )
                     BT_LinkBackToDeviceByBTAddress(&BTAPP_PairRecord[i].linkBdAddress[0]);
                     BT_LinkBackTaskState = BT_LINKBACK_TASK_LB_WAIT;
                     BT_LinkBackTimeWait = 30000;    //max. 30s time out
-                    //Set_LED_Style(LED_1, LED_BLINK, 500, 500); //1HZ for linkback process
-                    flag = true;
+                    flag = true;					
+					
                     break;
                 }
             }
@@ -1092,12 +1103,12 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			if(Broadcast_go_to_slave_flag)
 			{
 				Broadcast_go_to_slave_flag = false;
-				ACL_disconnect_flag = false;
+				ACL_disconnect_to_enter_slave_flag = false;
                 if(BTAPP_isBTConnected()){
 					BT_DisconnectAllProfile();
-					ACL_disconnect_flag = true;
+					ACL_disconnect_to_enter_slave_flag = true;
 					BT_button_manual_enter_pairing_flag = false;
-					BT_button_manual_reconnect_flag = false;
+					BT_button_manual_reconnect_to_X = 0;
                 }
 				else
                 	BTMSPK_TriggerConcertModeSlave();
@@ -1220,7 +1231,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_MSPK_BROADCAST_MASTER_CONNECTING_MORE:
 			//Set_LED_Style(LED_BROADCASTP, LED_ON, 500, 500);
-			
+			BT_PlayTone(TONE_BroadcastPairing);
 			User_SetLedPattern(led_broadcast_master_connecting);
 			
 			User_Log("BT_EVENT_MSPK_BROADCAST_MASTER_CONNECTING_MORE\n");
@@ -1266,10 +1277,22 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
 
         case BT_EVENT_HFP_LINK_CONNECTED:
+			if(User_getLinkedDeviceNumber() < 2)
+				BTAPP_Status.linkedDeviceNumber++;
+			
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
 			batteryDisplayDelay_timer1ms = 2000;
 			#ifdef RECONNECT_TO_PDL
-            BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
+			if(User_getLinkedDeviceNumber() >= 2)
+            	BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
+            else if((BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) ||
+					(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+			)
+            {
+				BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
+			}
+            else if(BT_LinkbackTaskRunning())
+				BT_LinkbackTaskNext();
             #endif
 			//BT_UpdateBatteryLevel(currentBatteryLevel);
 			User_Log("BT_EVENT_HFP_LINK_CONNECTED\n");
@@ -1318,7 +1341,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 
 			BT_PlayTone(TONE_Connected);
 			#ifdef RECONNECT_TO_PDL
-            BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18   
+            //BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18   
             #endif
 			
 			User_Log("BT_EVENT_A2DP_LINK_CONNECTED\n");
@@ -1327,29 +1350,56 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
                 BLE_forceUpdate();
 #endif             
             break;
-        case BT_EVENT_A2DP_LINK_DISCONNECTED:
-			if(BT_button_manual_enter_pairing_flag){
-				BTAPP_EnterBTPairingMode();
-			}
-			else
-				BT_button_manual_enter_pairing_flag = true;
+        case BT_EVENT_A2DP_LINK_DISCONNECTED:			
 			User_Log("BT_EVENT_A2DP_LINK_DISCONNECTED\n");
 			
             break;
 
 		case BT_EVENT_ACL_DISCONNECTED:
-			User_Log("BT_EVENT_A2DP_LINK_DISCONNECTED\n");
-			if(ACL_disconnect_flag)
+			if(User_getLinkedDeviceNumber())
+				BTAPP_Status.linkedDeviceNumber--;
+			User_Log("BT_EVENT_ACL_DISCONNECTED\n");
+			if(ACL_disconnect_to_enter_slave_flag)
 			{
-				ACL_disconnect_flag = false;
-				BTMSPK_TriggerConcertModeSlave();
+				if(User_getLinkedDeviceNumber() == 0){
+					ACL_disconnect_to_enter_slave_flag = false;
+					BTMSPK_TriggerConcertModeSlave();
+				}
 			}
 
-			if(BT_button_manual_reconnect_flag)
+			if(ACL_disconnect_to_enter_master_flag)
 			{
-				BT_button_manual_reconnect_flag = false;
-				BT_LinkbackTaskNextStart();
+				if(User_getLinkedDeviceNumber() == 0){
+					ACL_disconnect_to_enter_master_flag = false;
+					BTMSPK_TriggerConcertModeMaster();
+				}
+
 			}
+
+			if(BT_button_manual_reconnect_to_X == 1)//reconnect to next 1 device
+			{
+				if(User_getLinkedDeviceNumber() == 0){
+					BT_button_manual_reconnect_to_X = 0;
+					BT_LinkbackTaskNextXStart(1);
+				}
+			}
+			else if(BT_button_manual_reconnect_to_X == 2)//reconnect to next 2 device
+			{
+				if(User_getLinkedDeviceNumber() == 0){
+					BT_button_manual_reconnect_to_X = 0;
+					BT_LinkbackTaskNextXStart(2);
+				}
+			}
+
+			if(BT_button_manual_enter_pairing_flag){
+				if(User_getLinkedDeviceNumber() == 0)
+					BTAPP_EnterBTPairingMode();
+			}
+			else if(User_getLinkedDeviceNumber() == 0)
+			{
+				BT_button_manual_enter_pairing_flag = true;
+			}
+				
 			break;
 				
         case BT_EVENT_SYS_POWER_ON:			
@@ -1427,7 +1477,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 				User_SetLedPattern(led_bt_status_off);
 			}
 			#ifdef RECONNECT_TO_PDL
-            BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
+            //BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
             #endif
 			User_Log("BT_EVENT_LINKBACK_SUCCESS\n");
             break;
@@ -1448,6 +1498,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
 
        case BT_EVENT_BD_ADDR_RECEIVED:
+	   		User_Log("BT_EVENT_BD_ADDR_RECEIVED\n");
            BTAPP_Status.BDAddr[0] = *paras++;
            BTAPP_Status.BDAddr[1] = *paras++;
            BTAPP_Status.BDAddr[2] = *paras++;
@@ -2473,5 +2524,11 @@ void BTVOL_StartChangeVolMode(VOLUME_MODE mode, bool syncToBTM )
 	btDelayMode = mode;
 	isSyncToBTM = syncToBTM;
 }
+
+uint8_t User_getLinkedDeviceNumber(void)
+{
+	return BTAPP_Status.linkedDeviceNumber;
+}
+
 
 

@@ -158,6 +158,7 @@ typedef struct {
     uint8_t BDAddr[6];          //device address
     uint8_t FWVer[2];           //BTM firmware version
     uint8_t UARTVer[2];         //UART version
+    uint8_t linkedDeviceNumber;  //add by zx
     //bool groupLinkingBack;
 } BTAPP_STATUS;
 //linkback to all device, diffin, 2019-6-18 >>
@@ -239,7 +240,7 @@ extern uint16_t User_sys_nosignal_time;
 uint8_t currentBatteryLevel;
 
 bool BT_button_manual_enter_pairing_flag;
-bool BT_button_manual_reconnect_flag;
+uint8_t BT_button_manual_reconnect_to_X;
 
 uint8_t BTAPP_GetStatus(void);
 
@@ -267,6 +268,7 @@ uint8_t User_GetPairedRecordNumber( void );
 
 void BTVOL_StartChangeVolMode(VOLUME_MODE mode, bool syncToBTM);
 void BTVOL_DelayChangeVolMode( void );
+uint8_t User_getLinkedDeviceNumber(void);
 
 
 #ifdef _CODE_FOR_APP
@@ -290,7 +292,7 @@ void BT_LinkbackTaskNext ( void );
 void BT_LinkbackTaskStop ( void );
 bool BT_LinkbackTaskRunning ( void );
 void BT_LinkbackTask( void );
-void BT_LinkbackTaskNextStart ( void );
+void BT_LinkbackTaskNextXStart ( uint8_t X_device);
 
 #endif
 //linkback to all device, diffin, 2019-6-18 <<

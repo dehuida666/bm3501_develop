@@ -8,11 +8,12 @@
 #include "nf8230dsp_handler.h"
 
 
+#if 1
+
 #define BT_DSP_CODE_BT_Pairing_TERMINATION 0x00000000
 #define BT_DSP_CODE_BT_Pairing_START       0x00000000
 #define BT_DSP_CODE_BT_Pairing_FINISH      0x00000930
 #define BT_DSP_CODE_BT_Pairing_LENGTH      0x00000930
-
 
 const unsigned char BT_DSP_Code_BT_Pairing[BT_DSP_CODE_BT_Pairing_LENGTH] = 
 { 
@@ -165,6 +166,7 @@ const unsigned char BT_DSP_Code_BT_Pairing[BT_DSP_CODE_BT_Pairing_LENGTH] =
 0x69, 0x4a, 0x6a, 0x91, 0x0c, 0x31, 0xcd, 0x10, 0x07, 0x4d, 0x13, 0x2d, 0x69, 0xa0, 0x43, 0x59, 
 0xe6, 0x78, 
 };
+#endif
 
 
 #define BT_DSP_CODE_Power_On_TERMINATION 0x00000000
@@ -272,10 +274,12 @@ bool Tone_playPowerOnFlag = false;
 
 void Tone_PlayVoicePrompt(uint8_t tone_index)
 {
-	BT_SetVoicePromptByRawData();
+	BT_SetVoicePromptByRawData();	
 	tone_PlayIndex = tone_index;
-	if(tone_PlayIndex == TONE_PowerOn)
+	if(tone_PlayIndex == TONE_PowerOn){
 		Tone_playPowerOnFlag = true;
+		BT_SetVoicePromptByRawData();
+	}
 }
 
 void Tone_PlayPowerOn(void)

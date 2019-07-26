@@ -188,6 +188,8 @@ void BT_DisconnectAllProfileExceptSPP(void);
 void BT_DisconnectSPPProfile(void);
 void BT_DisconnectHFPProfile(void);
 void BT_DisconnectA2DPProfile(void);
+void BT_CancelPage(void);   //add by zx;
+
 void BT_EnterOTA(void);
 void BT_ExitOTA(void);
 void BT_SetOverallGain(uint8_t gain1, uint8_t gain2, uint8_t gain3, uint8_t link_index);
