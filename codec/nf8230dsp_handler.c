@@ -82,23 +82,21 @@ static const uint8_t volume_master_step_gain[VOL_MAX] =
 {
 	0x00,//-150
 	0x53,//-62
-	0x5D,//-57
-	0x71,//-47
-	0x7B,//-42
-	0x8D,//-33
-	0x99,//-27
-	0xA5,//-21
+	0x7F,//-40
+	0x93,//-30
+	0x9B,//-26
+	0xA3,//-22
+	0xA9,//-19
 	0xAF,//-16
-	0xB7,//-12
-	0xBD,//-9
+	0xB5,//-13
+	0xBB,//-10
 	0xC1,//-7
-	0xC7,//-4
-	//0xCF,//0
-	0xD1,//1/
-	0xD3,//2/
-	0xD5,//3/
-	//0xD9,//5//
-	0xDF,
+	0xC5,//-5
+	0xC9,// -3
+	0xCB,// -2
+	0xCD,// -1
+	0xD1,// 1
+	0xD5, // 3
 
 };
 
@@ -106,56 +104,26 @@ static const uint8_t volume_master_SW_step_gain[VOL_MAX] =
 {
 	0x00,
 	0x6A,//-50.5
-	0x72,//-46.5
-	0x7E,//-40.5
-	0x84,//-37.5
-	0x90,//-31.5
-	0x9C,//-25.5
-	0xA6,//-20.5
-	0xB0,//-15.5
-    0xB8,//-11.5
-	0xBE,//-8.5
-	0xC2,//-6.5
-	0xC8,//-3.5//
-	0xCE,//-0.5//
-	0xD6,//3.5
-	//0xDA,//5.5
-	//0xDE,//7.5
-	0xD7,
-	0xD9,
+	0x7F,//-40
+	0x97,//-28
+	0x9F,//-24
+	0xA9,//-19
+	0xB1,//-15
+	0xB7,//-12
+	0xBD,//-9
+    0xC1,//-7
+	0xC5,//-5
+	0xC9,//-3
+	0xCB,//-2
+	0xCD,// -1
+	0xCF, //0
+	0xD3, // 2
+	0xD7, // 4
 
 };
 
+//20190727    Invalid, The volume will not be set.
 
-#if 0
-static const uint8_t volume_treble_step_gain[9] = 
-{
-	VOLUME_0db - treble_step * 4,
-	VOLUME_0db - treble_step * 3,
-	VOLUME_0db - treble_step * 2,
-	VOLUME_0db - treble_step * 1,
-	VOLUME_0db,
-	VOLUME_0db + treble_step * 1,
-	VOLUME_0db + treble_step * 2,
-	VOLUME_0db + treble_step * 3,
-	VOLUME_0db + treble_step * 4,
-
-};
-
-static const uint8_t volume_bass_step_gain[9] = 
-{
-	VOLUME_0db - bass_step * 4,
-	VOLUME_0db - bass_step * 3,
-	VOLUME_0db - bass_step * 2,
-	VOLUME_0db - bass_step * 1,
-	VOLUME_0db,
-	VOLUME_0db + bass_step * 1,
-	VOLUME_0db + bass_step * 2,
-	VOLUME_0db + bass_step * 3,
-	VOLUME_0db + bass_step * 4,
-
-};
-#else
 static const COEFFICIENT_STRUCT volume_treble_frequency_point[] = 
 {
 	//-8	
@@ -187,11 +155,11 @@ static const COEFFICIENT_STRUCT volume_treble_frequency_point[] =
 	0x18, 0x0fb03971,
 
 	//0	
-	0x14, 0x11000000,
-	0x15, 0x118d8c80,
-	0x16, 0x0f49ac71,
-	0x17, 0x110d8c80,
-	0x18, 0x0fc9ac71,
+	0x14, 0x106ebc30,
+	0x15, 0x11888054,
+	0x16, 0x0f52c112,
+	0x17, 0x11088054,
+	0x18, 0x0fb03971,
 	
 	// 2
 	0x14, 0x110941b9,
@@ -262,11 +230,11 @@ static const COEFFICIENT_STRUCT volume_bass_frequency_point[] =
 	
 
 	//0	
-	0x0, 0x11000000,
-	0x1, 0x11ff9f59,
-	0x2, 0x107f3f45,
-	0x3, 0x117f9f59,
-	0x4, 0x10ff3f45,
+	0x5, 0x11002c85,
+	0x6, 0x11ff27ac,
+	0x7, 0x107df74f,
+	0x8, 0x117f27ac,
+	0x9, 0x10fe5059,
 	
 	
 	// 2		
@@ -308,7 +276,6 @@ static const COEFFICIENT_STRUCT volume_bass_frequency_point[] =
 };
 
 
-#endif
 
 
 /*-----------------------------------------------------------------------------*/
@@ -1081,6 +1048,8 @@ void ntp8230g_set_treble_volume(uint8_t vol)
 
 	volume_treble_step = vol;
 
+	return;
+
 	I2C_Write_NTP8230_LR(0x7E,0x03); //Enable download
 
 	for(i=(vol*5);i < (5*(vol + 1));i++)
@@ -1103,6 +1072,8 @@ void ntp8230g_set_bass_volume(uint8_t vol)
 		return;
 	
 	volume_bass_step = vol;
+
+	return;
 
 	I2C_Write_NTP8230_SW(0x7E,0x03); //Enable download
 
@@ -1503,7 +1474,7 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 			if(Ringtone_Mode == 0xff){
 				if(Tone_playPowerOnFlag){
 					User_Log("power on tone volume set\n");
-					ntp8230g_set_master_volume_temp(12);
+					ntp8230g_set_master_volume_temp(11);
 					Tone_playPowerOnFlag = false;
 				}
 				else
