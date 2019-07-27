@@ -52,6 +52,7 @@ BTAPP_STATUS BTAPP_Status;        // BM64 internal system status
 bool BT_button_manual_enter_pairing_flag = true;
 uint8_t BT_button_manual_reconnect_to_X = 0;
 
+bool Broadcast_connecting_more_tone_flag = false;
 
 //linkback to all device, diffin, 2019-6-18 >>
 //variables declaration
@@ -211,6 +212,8 @@ void BTAPP_Init( void )
 
 	BT_button_manual_enter_pairing_flag = true;
 	BT_button_manual_reconnect_to_X = 0;
+
+	Broadcast_connecting_more_tone_flag = false;
 
 	BTAPP_Status.linkedDeviceNumber = 0;
 
@@ -1231,7 +1234,11 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_MSPK_BROADCAST_MASTER_CONNECTING_MORE:
 			//Set_LED_Style(LED_BROADCASTP, LED_ON, 500, 500);
-			BT_PlayTone(TONE_BroadcastPairing);
+			if(Broadcast_connecting_more_tone_flag)
+			{
+				BT_PlayTone(TONE_BroadcastPairing);
+				Broadcast_connecting_more_tone_flag = false;
+			}
 			User_SetLedPattern(led_broadcast_master_connecting);
 			
 			User_Log("BT_EVENT_MSPK_BROADCAST_MASTER_CONNECTING_MORE\n");
@@ -1376,14 +1383,14 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 
 			}
 
-			if(BT_button_manual_reconnect_to_X == 1)//reconnect to next 1 device
+			if(BT_button_manual_reconnect_to_X == 1)//reconnect to  2ed device
 			{
 				if(User_getLinkedDeviceNumber() == 0){
 					BT_button_manual_reconnect_to_X = 0;
 					BT_LinkbackTaskNextXStart(1);
 				}
 			}
-			else if(BT_button_manual_reconnect_to_X == 2)//reconnect to next 2 device
+			else if(BT_button_manual_reconnect_to_X == 2)//reconnect to  3rd device
 			{
 				if(User_getLinkedDeviceNumber() == 0){
 					BT_button_manual_reconnect_to_X = 0;

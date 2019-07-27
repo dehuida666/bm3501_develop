@@ -242,6 +242,9 @@ uint8_t currentBatteryLevel;
 bool BT_button_manual_enter_pairing_flag;
 uint8_t BT_button_manual_reconnect_to_X;
 
+bool Broadcast_connecting_more_tone_flag;
+
+
 uint8_t BTAPP_GetStatus(void);
 
 void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size );

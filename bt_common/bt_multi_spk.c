@@ -431,6 +431,7 @@ void BTMSPK_AddMoreSpeaker( void )
     if( BT_eCSBStatus.nspk_status == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER )
     {
         BT_MMI_ActionCommand(0xF6, 0 );
+		Broadcast_connecting_more_tone_flag = true;
     }
 }
 
