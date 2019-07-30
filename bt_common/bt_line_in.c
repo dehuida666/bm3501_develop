@@ -142,6 +142,7 @@ void AnalogAudioDetectTask(void)
                 BTMA2DP_PauseStart();
                 BT_EnterNonConnectableMode(0);//non-connectable
                 BT_EnterLineInMode(1, 0);
+				User_Log("AUDIO_AUXIN\n");
 				
             }
 		    else
@@ -151,6 +152,8 @@ void AnalogAudioDetectTask(void)
 		       
 		        //User_SoundOnOff(OFF,true);
 				 BTMA2DP_PlayStart();
+
+				User_Log("AUDIO_A2DP\n");
 
 				if(BTMA2DP_getA2DPLinkStatus(BTMA2DP_getActiveDatabaseIndex()) && (!BTMHFP_GetHFPLinkStatus( BTMHFP_GetDatabaseIndex())))
 					BT_LinkBackToLastDevice();//reconnect HFP

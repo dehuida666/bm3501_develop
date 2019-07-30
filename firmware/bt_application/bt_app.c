@@ -1423,7 +1423,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_SYS_POWER_OFF:
             BTAPP_Status.status = BT_SYSTEM_POWER_OFF;
-			BT_PlayTone(TONE_PowerOff);
+			//BT_PlayTone(TONE_PowerOff);
 			User_SetLedPattern(led_voloff);
 			User_LedPrimaryPairingOFF();
 			User_SetLedPattern(led_bt_status_off);
@@ -2160,7 +2160,7 @@ static uint8_t bat_convert_advalue_to_level(uint16_t ad_value)
 	{
 		bat_level = 10;
 	}
-	else if(bat_adc_value < 763)//2.43v 10.7
+	else if(bat_adc_value < 763)//2.46v 10.7
 	{
 		bat_level = 11;
 	}
@@ -2251,13 +2251,30 @@ static void bat_calculate_average_value (uint16_t ad_value)
 
 		if(DC_PULL_OUT)
 		{
-			if(currentBatteryLevel > bat_level)
-				currentBatteryLevel = currentBatteryLevel - 10;
+			if(currentBatteryLevel > bat_level){
+				if(currentBatteryLevel == 20)
+				{
+					currentBatteryLevel = 11;
+				}
+				else if(currentBatteryLevel == 11)
+				{
+					currentBatteryLevel = 10;
+				}
+				else
+					currentBatteryLevel = currentBatteryLevel - 10;
+			}
 		}
 		else
 		{
 			if(bat_level > currentBatteryLevel)
-				currentBatteryLevel = currentBatteryLevel + 10;
+			{
+				if(currentBatteryLevel == 10)
+					currentBatteryLevel = 11;
+				else if(currentBatteryLevel == 11)
+					currentBatteryLevel = 20;
+				else
+					currentBatteryLevel = currentBatteryLevel + 10;
+			}
 		}
 
 		
@@ -2446,6 +2463,7 @@ void User_PowerOnEvent( void )
 
 	if(!DC_PULL_OUT)
 	{
+		//LED_init();
 		NF8230dsp_init();
 		TM1812_Reset();
 		bt_disableUartTransferIntr();
@@ -2506,6 +2524,7 @@ static void led_power_on_failed_indicate()
 
 void BTVOL_DelayChangeVolMode( void )
 {
+	#if 0
 	if(btDelayToChangeVolMode_timer1ms)
 	{
 		if(!BTMA2DP_GetA2DPCodecStatus())
@@ -2515,6 +2534,7 @@ void BTVOL_DelayChangeVolMode( void )
 			btDelayToChangeVolModeTimeOutFlag = true;
 		}
 	}
+	#endif
 	
 	if(btDelayToChangeVolModeTimeOutFlag){		
 		btDelayToChangeVolModeTimeOutFlag = false;

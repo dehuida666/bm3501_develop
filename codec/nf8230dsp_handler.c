@@ -1048,7 +1048,7 @@ void ntp8230g_set_treble_volume(uint8_t vol)
 
 	volume_treble_step = vol;
 
-	return;
+	return;//
 
 	I2C_Write_NTP8230_LR(0x7E,0x03); //Enable download
 
@@ -1073,7 +1073,7 @@ void ntp8230g_set_bass_volume(uint8_t vol)
 	
 	volume_bass_step = vol;
 
-	return;
+	return;//
 
 	I2C_Write_NTP8230_SW(0x7E,0x03); //Enable download
 
