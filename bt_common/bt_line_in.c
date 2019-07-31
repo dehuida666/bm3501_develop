@@ -186,6 +186,7 @@ void BTM_LINE_IN_EventHandler( BT_LINE_IN_EVENTS event, uint8_t* paras, uint16_t
             {
 				if(BTMHFP_GetCallStatus() == BT_CALL_IDLE)       //not in SCO mode
                 {
+					User_Log("LineInStatus %d\n",LineInStatus);
                     //BTVOL_ChangeVolMode(LINE_IN_VOL_MODE, false);
 					BTVOL_StartChangeVolMode(LINE_IN_VOL_MODE,false);
 					User_Log("BTVOL_ChangeVolMode 6\n");    
