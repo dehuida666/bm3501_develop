@@ -1450,6 +1450,8 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
 
         case BT_EVENT_SYS_PAIRING_START:
+			if(BTAPP_Status.status == BT_SYSTEM_POWER_OFF)
+				break;
             BTAPP_Status.status = BT_SYSTEM_PAIRING;
 			Tone_PlayVoicePrompt(TONE_BTPairing);
             User_SetLedPattern(led_pairing);
@@ -2464,6 +2466,8 @@ void User_PowerOnEvent( void )
 	if(!DC_PULL_OUT)
 	{
 		//LED_init();
+		led_effect_index = led_none;
+		led_effect_index_prev = led_none;
 		NF8230dsp_init();
 		TM1812_Reset();
 		bt_disableUartTransferIntr();

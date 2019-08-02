@@ -397,7 +397,7 @@ const COEFFICIENT_STRUCT NTP8230_Eq4_Data_LR[]={
   0x34, 0x1037b5df,
   0x35, 0x11390c2e,
   0x36, 0x10ab595f,
-#ifndef EQB
+#ifdef EQB
   0x37, 0x11000000,
   0x38, 0x11f66fc8,
   0x39, 0x106d8cba,
@@ -1490,9 +1490,9 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 			set_master_volume_temp_Flag = true;
             
 #if 1
-			if((Ringtone_Mode == TONE_BroadcastPairing))//10.841s
+			if((Ringtone_Mode == TONE_BroadcastPairing))//3s
 			{
-				ringTone_1msTimer = 10820;
+				ringTone_1msTimer = 3000;
 			}
 			else if((Ringtone_Mode == TONE_Connected))//0.97s
 			{
@@ -1502,9 +1502,9 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 			{
 				ringTone_1msTimer = 380;
 			}
-			else//10.721s  BT pairing
+			else//3s  BT pairing
 			{
-				ringTone_1msTimer = 10700;
+				ringTone_1msTimer = 3000;
 			}
 #endif
 
