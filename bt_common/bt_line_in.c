@@ -181,9 +181,16 @@ void BTM_LINE_IN_EventHandler( BT_LINE_IN_EVENTS event, uint8_t* paras, uint16_t
     switch( event )
     {
         case BT_EVENT_LINE_IN_STATUS:
-            LineInStatus = paras[1];
+            LineInStatus = paras[1];			
             if(LineInStatus != LINE_IN_INACTIVE)
             {
+				if(!BTM_LINE_IN_IsPlugged())
+				{
+					BT_EnterLineInMode(0, 0);
+					User_Log("Enter BT mode again\n");
+					break;
+				}
+				
 				if(BTMHFP_GetCallStatus() == BT_CALL_IDLE)       //not in SCO mode
                 {
 					User_Log("LineInStatus %d\n",LineInStatus);
@@ -194,6 +201,12 @@ void BTM_LINE_IN_EventHandler( BT_LINE_IN_EVENTS event, uint8_t* paras, uint16_t
             }
             else
             {
+				if(BTM_LINE_IN_IsPlugged()){
+					BT_EnterLineInMode(1, 0);
+					User_Log("Enter Line in mode again\n");
+					break;
+				}
+				
 				if(BTMHFP_GetCallStatus() != BT_CALL_IDLE)           //if it is SCO mode, back to SCO(this is not possible but safe for code)
                     ;//BTVOL_ChangeVolMode(HFP_VOL_MODE, false);
                 else{
