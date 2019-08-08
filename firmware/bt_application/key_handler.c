@@ -94,6 +94,7 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 								BT_LinkbackTaskNextXStart(1);
 							}
 						}
+						#if 0   // Cancel BT button short press to cycle through connected devices
 						else if(User_getLinkedDeviceNumber() == 2)
 						{
 							if(User_GetPairedRecordNumber() > 2){
@@ -102,6 +103,7 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 								BT_button_manual_reconnect_to_X = 2;
 							}
 						}
+						#endif
 						
 					}
 				}
