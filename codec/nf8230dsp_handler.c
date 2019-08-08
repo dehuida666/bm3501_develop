@@ -1022,13 +1022,15 @@ void ntp8230g_set_master_volume(uint8_t vol)
 			User_SoundOnOff(ON, true);
 		
 		volume_master_step = VOL_MAX - 1;
-		if(is_master_volume_decrease_20dB_flag == false)
+		#if 0    //Remove max volume dip
+		if(is_master_volume_decrease_20dB_flag == false)  
 		{
 			is_master_volume_decrease_20dB_flag = true;
 			master_volume_decrease_20dB_timer1ms = 500;
 			ntp8230g_set_master_volume_MAX_temp();
 		}
 		else
+		#endif
 		{
 			is_master_volume_decrease_20dB_flag = false;
 			I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[VOL_MAX - 1]);
@@ -1311,7 +1313,6 @@ void NF8230dsp_task(void)
 	if(master_volume_decrease_20dB_TimeOutFlag)
 	{
 		master_volume_decrease_20dB_TimeOutFlag = false;
-		//is_master_volume_decrease_20dB_flag = false;
 		ntp8230g_return_master_volume();
 		vol_temp = VOL_MAX - 7;
 	}
@@ -1319,6 +1320,8 @@ void NF8230dsp_task(void)
 	if(Volume_100msTimeOutFlag)
 	{
 		Volume_100msTimeOutFlag = false;
+
+		#if 0  //Remove max volume dip
 
 		if(is_master_volume_decrease_20dB_flag)
 		{
@@ -1328,6 +1331,7 @@ void NF8230dsp_task(void)
 			ntp8230g_set_master_volume_temp(vol_temp);
 
 		}
+		#endif
 	}
 
 	if(ringTone_1msTimeOutFlag)
