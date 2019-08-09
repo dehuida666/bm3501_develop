@@ -166,6 +166,8 @@ uint8_t led_power_on_failed_cnt = 0;
  VOLUME_MODE btDelayMode;
  bool isSyncToBTM;
 
+ bool BatteryLowDecreaseVolume3dB_flag = false;
+
  /*-----------------------------------------------------------------------------*/
 /**/
 /*-----------------------------------------------------------------------------*/
@@ -216,6 +218,8 @@ void BTAPP_Init( void )
 	Broadcast_connecting_more_tone_flag = false;
 
 	BTAPP_Status.linkedDeviceNumber = 0;
+
+	BatteryLowDecreaseVolume3dB_flag = false;
 
 }
 
@@ -920,6 +924,10 @@ void DC_DetectTask(void)
 			}
 			
 			User_LEDDisplayChargeBatteryLevel(currentBatteryLevel);
+
+			BatteryLowDecreaseVolume3dB_flag = false;
+			ntp8230g_set_volume(VOLUME,volume_master_step);
+			
 			User_Log("DC plug in\n");
 			User_Log("User_LEDDisplayChargeBatteryLevel = %d\n",currentBatteryLevel);
 			
@@ -934,6 +942,7 @@ void DC_DetectTask(void)
 			
 			if(batteryLowAutoPowerOff_100mstimer)
 				batteryLowAutoPowerOff_100mstimer = 0;
+			
 			break;
 			
 
@@ -1687,7 +1696,11 @@ void BTAPP_Timer1MS_event( void )
         -- batteryChargeDetect_timer1ms;
         if(batteryChargeDetect_timer1ms == 0)
         {
-            batteryChargeDetect_timer1ms = 3000;
+			if((currentBatteryLevel <= 10) && (DC_PULL_OUT))
+				batteryChargeDetect_timer1ms = 500;
+			else
+            	batteryChargeDetect_timer1ms = 3000;
+			
             batteryChargeDetectTimeOutFlag = true;
         }
     }
@@ -1772,8 +1785,10 @@ void BTAPP_EnterBTPairingMode( void )
     {
 		if(BTAPP_Status.status != BT_SYSTEM_PAIRING)
 		{
-			//Set_LED_Style(LED_0, LED_BLINK, 500, 500);      //1HZ before pairing starting
-			BT_MMI_ActionCommand(ANY_MODE_ENTERING_PAIRING, 0);
+			if(!BTM_LINE_IN_IsPlugged())
+			{
+				BT_MMI_ActionCommand(ANY_MODE_ENTERING_PAIRING, 0);
+			}
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
             #endif			
@@ -2158,6 +2173,7 @@ static uint8_t bat_convert_advalue_to_level(uint16_t ad_value)
 	{
 		bat_level = 0;
 	}
+	#if 0
 	else if(bat_adc_value <= 741)//2.39v 10.4
 	{
 		bat_level = 10;
@@ -2166,6 +2182,16 @@ static uint8_t bat_convert_advalue_to_level(uint16_t ad_value)
 	{
 		bat_level = 11;
 	}
+	#else
+	else if(bat_adc_value <= 726)//2.34v 10.2
+	{
+		bat_level = 10;
+	}
+	else if(bat_adc_value < 754)//2.43v 10.5
+	{
+		bat_level = 11;
+	}
+	#endif
 	else if(bat_adc_value < 785)//2.53v 11
 	{
 		bat_level = 20;
@@ -2409,6 +2435,13 @@ void User_LEDDisplayNoChargeBatteryLevel(uint8_t level)
 		else if(level <= 40)//<=40% battery: solid Red
 		{
 			Set_LED_Style(LED_2,LED_ON,500,500);
+			if(level <= 11)
+			{
+				if(!BatteryLowDecreaseVolume3dB_flag){
+					BatteryLowDecreaseVolume3dB_flag = true;
+					ntp8230g_set_volume(VOLUME,volume_master_step);
+				}
+			}
 
 		}
 		else if(level <= 70)//41-70% battery: solid Yellow(R & G)

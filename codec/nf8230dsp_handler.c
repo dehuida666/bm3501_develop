@@ -966,8 +966,8 @@ void ntp8230g_set_master_volume_temp(uint8_t vol)
 	if(sound_is_mute_flag)
 		User_SoundOnOff(ON, true);
 	
-	I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[vol]);
-	I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[vol]);
+	I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, 0xC5/*volume_master_step_gain[vol]*/);
+	I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, 0xC5/*volume_master_SW_step_gain[vol]*/);
 }
 
 
@@ -1012,8 +1012,17 @@ void ntp8230g_set_master_volume(uint8_t vol)
 		
 		volume_master_step = vol;
 		is_master_volume_decrease_20dB_flag = false;
-		I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[vol]);
-		I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[vol]);
+		if((currentBatteryLevel <= 11) && (DC_PULL_OUT))//-3dB
+		{
+			I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[vol] - 12);
+			I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[vol] -12);
+		}
+		else
+		{
+			I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[vol]);
+			I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[vol]);
+
+		}
 		
 	}
 	else 
@@ -1033,8 +1042,17 @@ void ntp8230g_set_master_volume(uint8_t vol)
 		#endif
 		{
 			is_master_volume_decrease_20dB_flag = false;
-			I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[VOL_MAX - 1]);
-			I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[VOL_MAX - 1]);
+			if((currentBatteryLevel <= 11) && (DC_PULL_OUT))//-3dB
+			{
+				I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[VOL_MAX - 1] - 12);
+				I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[VOL_MAX - 1] -12);
+			}
+			else
+			{
+				I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[VOL_MAX - 1]);
+				I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[VOL_MAX - 1]);
+
+			}
 		}
 
 	}
