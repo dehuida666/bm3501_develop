@@ -1014,8 +1014,8 @@ void ntp8230g_set_master_volume(uint8_t vol)
 		is_master_volume_decrease_20dB_flag = false;
 		if((currentBatteryLevel <= 11) && (DC_PULL_OUT))//-3dB
 		{
-			I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[vol] - 12);
-			I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[vol] -12);
+			I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[vol] - 6);
+			I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[vol] - 6);
 		}
 		else
 		{
@@ -1044,8 +1044,8 @@ void ntp8230g_set_master_volume(uint8_t vol)
 			is_master_volume_decrease_20dB_flag = false;
 			if((currentBatteryLevel <= 11) && (DC_PULL_OUT))//-3dB
 			{
-				I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[VOL_MAX - 1] - 12);
-				I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[VOL_MAX - 1] -12);
+				I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, volume_master_step_gain[VOL_MAX - 1] - 6);
+				I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[VOL_MAX - 1] - 6);
 			}
 			else
 			{
