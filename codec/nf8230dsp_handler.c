@@ -6,6 +6,8 @@
 #include "nf8230dsp_handler.h"
 #include "bt_command_send.h"
 #include "user_tone.h"
+#include "bt_hfp.h"
+
 
 
 
@@ -882,13 +884,27 @@ void NF8230dsp_SetLChannelOnOff(bool on_off)
 	{
 		
 		I2C_Write_NTP8230_LR(TREBLE_CH2_VOLUME_REG, 0xCF);
+	}
+	else
+	{
+		I2C_Write_NTP8230_LR(TREBLE_CH2_VOLUME_REG, 0);
+
+	}
+
+}
+
+void NF8230dsp_SetSWChannelOnOff(bool on_off)
+{
+	if(!is_ntp8230g_ready())
+		return;
+	if(on_off)
+	{
 		I2C_Write_NTP8230_SW(TREBLE_CH1_VOLUME_REG, 0xCF);
 		I2C_Write_NTP8230_SW(TREBLE_CH2_VOLUME_REG, 0xCF);
 
 	}
 	else
 	{
-		I2C_Write_NTP8230_LR(TREBLE_CH2_VOLUME_REG, 0);
 		I2C_Write_NTP8230_SW(TREBLE_CH1_VOLUME_REG, 0);
 		I2C_Write_NTP8230_SW(TREBLE_CH2_VOLUME_REG, 0);
 
@@ -896,7 +912,8 @@ void NF8230dsp_SetLChannelOnOff(bool on_off)
 
 }
 
-void NF8230dsp_SetBQOnOff(bool on_off)
+
+void NF8230dsp_SetEQOnOff(bool on_off)
 {
     uint8_t i;
 	if(!is_ntp8230g_ready())
@@ -1349,7 +1366,9 @@ void NF8230dsp_task(void)
 	{
 		ringTone_1msTimeOutFlag = false;
 		set_master_volume_temp_Flag = false;
-		NF8230dsp_SetBQOnOff(ON);
+		if(BTMHFP_GetCallStatus() == BT_CALL_IDLE)
+			NF8230dsp_SetEQOnOff(ON);
+		
 		ntp8230g_set_master_volume(volume_master_step);
 		User_Log("Ring tone timeout\n");
 	}
@@ -1475,7 +1494,9 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 		if(set_master_volume_temp_Flag == true){
 			User_Log("Ringtone playback is going to be stopped\n");
 			set_master_volume_temp_Flag = false;
-			NF8230dsp_SetBQOnOff(ON);
+			if(BTMHFP_GetCallStatus() == BT_CALL_IDLE)
+				NF8230dsp_SetEQOnOff(ON);
+			
 			ntp8230g_set_master_volume(volume_master_step);
 			ringTone_1msTimer = 0;
 			ringTone_1msTimeOutFlag = false;
@@ -1500,14 +1521,15 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 				ntp8230g_set_master_volume_temp(vol_tone);
 			else
 				ntp8230g_set_master_volume_temp(vol_tone);
-			
-			NF8230dsp_SetBQOnOff(OFF);
+
+			if(BTMHFP_GetCallStatus() == BT_CALL_IDLE)
+				NF8230dsp_SetEQOnOff(OFF);
 			set_master_volume_temp_Flag = true;
             
 #if 1
 			if((Ringtone_Mode == TONE_BroadcastPairing))//3s
 			{
-				ringTone_1msTimer = 3000;
+				ringTone_1msTimer = 3200;
 			}
 			else if((Ringtone_Mode == TONE_Connected))//0.97s
 			{
@@ -1519,7 +1541,7 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 			}
 			else//3s  BT pairing
 			{
-				ringTone_1msTimer = 3000;
+				ringTone_1msTimer = 3200;
 			}
 #endif
 

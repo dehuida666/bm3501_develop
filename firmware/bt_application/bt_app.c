@@ -1347,6 +1347,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			}			
 			
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
+			BT_PlayTone(TONE_Connected);
 			//if(BT_EVENT_A2DP_LINK_CONNECTED == event)
 			{
               if(BT_IsCommandSendTaskIdle())
@@ -1354,8 +1355,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
                 BT_GetPairRecordCommand();
               }
 			}
-
-			BT_PlayTone(TONE_Connected);
+			
 			#ifdef RECONNECT_TO_PDL
             //BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18   
             #endif

@@ -53,7 +53,8 @@ void BTMHFP_EventHandler( BT_HFP_EVENTS event, uint8_t* paras, uint16_t size )
 				{
 					//BTVOL_ChangeVolMode(HFP_VOL_MODE, false);
 					NF8230dsp_SetLChannelOnOff(OFF);
-					NF8230dsp_SetBQOnOff(OFF);
+					NF8230dsp_SetSWChannelOnOff(OFF);
+					NF8230dsp_SetEQOnOff(OFF);
 					BTVOL_StartChangeVolMode(HFP_VOL_MODE,false);
 					User_Log("BTVOL_ChangeVolMode 3\n");
 					User_SetLedPattern(led_hfp_active);
@@ -74,7 +75,8 @@ void BTMHFP_EventHandler( BT_HFP_EVENTS event, uint8_t* paras, uint16_t size )
 					User_Log("BTVOL_ChangeVolMode 5\n");
                 }
 				NF8230dsp_SetLChannelOnOff(ON);
-				NF8230dsp_SetBQOnOff(ON);
+				NF8230dsp_SetSWChannelOnOff(ON);
+				NF8230dsp_SetEQOnOff(ON);
 
 				User_SetLedPattern(led_bt_status_off);
             }

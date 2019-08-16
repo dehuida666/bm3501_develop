@@ -71,7 +71,10 @@ static uint8_t iphone_abs_vol[17] =
 /*------------------------------------------------------------*/
 static uint8_t volumeFormatTo4bits(uint8_t volume)
 {
-    return volume;
+	if(volume)
+    	return volume - 1;
+	else
+		return 0;
 }
 
 /*------------------------------------------------------------*/
@@ -134,10 +137,18 @@ static void volumeDown(VOLUME_MODE mode, uint8_t bt_index)
     {
         (*p)--;
     }
+
+	if(mode == HFP_VOL_MODE)//Speaker: 1-16  device: 0-15
+	{
+		if(*p < 1)
+	    {
+	        (*p) = 1;
+	    }
+	}
 }
 
 /*------------------------------------------------------------*/
-static void set4bitVol(uint8_t vol, VOLUME_MODE mode, uint8_t bt_index)
+static void set4bitVol(uint8_t vol, VOLUME_MODE mode, uint8_t bt_index) //device -> Speaker
 {
     uint8_t* p;
     switch(mode)
@@ -146,14 +157,14 @@ static void set4bitVol(uint8_t vol, VOLUME_MODE mode, uint8_t bt_index)
             p = &(BTAPP_Volume.a2dpVol[bt_index]);
             break;
         case HFP_VOL_MODE:
-            p = &BTAPP_Volume.hfpVol;
+            p = &BTAPP_Volume.hfpVol;   //0 -> 15
             break;
         case LINE_IN_VOL_MODE:
             p = &BTAPP_Volume.lineInVol;
             break;
     }
     vol &= 0x0f;
-	*p = vol;
+	*p = vol + 1;
     //*p = vol<<1;
 }
 
