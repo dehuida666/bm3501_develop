@@ -702,9 +702,13 @@ void BTAPP_Task(void) {
 
 		if(batteryDisplayDelayTimeOutFlag == true)
 		{
-			batteryDisplayDelayTimeOutFlag = false;
-			BT_UpdateBatteryLevel(currentBatteryLevel);
-			User_Log("BT_UpdateBatteryLevel = %d\n",currentBatteryLevel);
+			
+			if(BT_IsCommandSendTaskIdle())
+			{
+				batteryDisplayDelayTimeOutFlag = false;
+				BT_UpdateBatteryLevel(currentBatteryLevel);
+				User_Log("BT_UpdateBatteryLevel = %d\n",currentBatteryLevel);
+			}
 		}
 
 		if(sys_timer100msTimeOutFlag)
@@ -2313,7 +2317,8 @@ static void bat_calculate_average_value (uint16_t ad_value)
 			//BT_UpdateBatteryLevel(currentBatteryLevel);
 			if(batteryDisplayDelay_timer1ms == 0)
 			{
-				BT_UpdateBatteryLevel(currentBatteryLevel);
+				if(BT_IsCommandSendTaskIdle())
+					BT_UpdateBatteryLevel(currentBatteryLevel);
 			}
 		}
 		

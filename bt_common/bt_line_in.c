@@ -138,7 +138,7 @@ void AnalogAudioDetectTask(void)
             audio_selected = auxin_plugged ? AUDIO_AUXIN : AUDIO_A2DP;		
             if( audio_selected == AUDIO_AUXIN )
             {
-				//User_SoundOnOff(OFF,true);
+				User_SoundOnOff(OFF,true);
                 BTMA2DP_PauseStart();
                 BT_EnterNonConnectableMode(0);//non-connectable
                 BT_EnterLineInMode(1, 0);
@@ -150,8 +150,8 @@ void AnalogAudioDetectTask(void)
                 BT_EnterLineInMode(0, 0);				
 				BT_EnterNonConnectableMode(1);//normal
 		       
-		        //User_SoundOnOff(OFF,true);
-				 BTMA2DP_PlayStart();
+		        User_SoundOnOff(OFF,true);
+				BTMA2DP_PlayStart();
 
 				User_Log("AUDIO_A2DP\n");
 

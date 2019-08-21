@@ -517,7 +517,7 @@ void KEY_Handler ( uint8_t key, uint8_t event )
             {
                 if(BTAPP_GetStatus() == BT_STATUS_READY)
                 {
-                    BTAPP_SoundVersion();
+                    //BTAPP_SoundVersion();
                 }
             }
             break;
