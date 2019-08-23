@@ -943,6 +943,9 @@ void User_DisplayVolumeLevel()
 		else
 			step = volume_bass_step;
 
+		ledvolume0_blink_cnt = 0;//don't blink if volume mode is not treble or bass
+		ledvolume16_blink_cnt = 0;
+
 		if(step == 4)
 		{
 			led_on_off(1 << 3,ON);
