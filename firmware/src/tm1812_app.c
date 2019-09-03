@@ -1022,6 +1022,10 @@ void User_ReturnDisLEDBTStatus()
 		{
 			User_SetLedPattern(led_broadcast_connect_slave);
 		}
+		else if(BTMHFP_GetCallStatus() != BT_CALL_IDLE )
+		{
+			User_SetLedPattern(led_hfp_active);
+		}
 		else if(led_effect_index_prev <= led_bt_status_off)
 			User_SetLedPattern(led_effect_index_prev);
 

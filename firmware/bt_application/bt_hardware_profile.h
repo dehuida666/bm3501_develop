@@ -47,7 +47,7 @@
 //#define _SUPPORT_SIMPLE_33_EVENT //33 event is to report multi speaker status. For MSPK, it return connected status with peer address. But for 104 ROM, there is no address, so need to define this macro
 
 //define command size, command buffer size for command in and out
-#define     UR_TX_BUF_SIZE              9000//500         //maximum buffer size for command sending
+#define     UR_TX_BUF_SIZE              5000//500         //maximum buffer size for command sending
 #define     UR_RX_BUF_SIZE              500         //maximum buffer size for command receiving
 #define     BT_CMD_SIZE_MAX				200         //maximum size for a single command
 #define     QUEQUED_CMD_MAX                 30      //maximum number of command in buffer to be sending 

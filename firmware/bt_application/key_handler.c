@@ -72,7 +72,7 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 			break;
 
 		case KEY_ID_BT:
-			if(event == KEY_EVENT_PRIMARY )//Toggle BT sources
+			if(event == KEY_EVENT_PRIMARY )
 			{
 				User_Log("BT key sp\n");
 				User_Log("User_GetPairedRecordNumber = %d\n",User_GetPairedRecordNumber());

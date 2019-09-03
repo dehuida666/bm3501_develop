@@ -957,8 +957,8 @@ void ntp8230g_set_master_volume_temp(uint8_t vol)
 	if(sound_is_mute_flag)
 		User_SoundOnOff(ON, true);
 	
-	I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, 0xC5/*volume_master_step_gain[vol]*/);
-	I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, 0xC5/*volume_master_SW_step_gain[vol]*/);
+	I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, 0xD5/*volume_master_step_gain[vol]*/);
+	I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, 0xD5/*volume_master_SW_step_gain[vol]*/);
 }
 
 
@@ -1487,7 +1487,7 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 			if(Ringtone_Mode == 0xff){
 				if(Tone_playPowerOnFlag){
 					User_Log("power on tone volume set\n");
-					ntp8230g_set_master_volume_temp(11);
+					ntp8230g_set_master_volume_temp(vol_tone);
 					Tone_playPowerOnFlag = false;
 				}
 				else
@@ -1504,9 +1504,9 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 			set_master_volume_temp_Flag = true;
             
 #if 1
-			if((Ringtone_Mode == TONE_BroadcastPairing))//3s
+			if((Ringtone_Mode == TONE_BroadcastPairing))//5s
 			{
-				ringTone_1msTimer = 3200;
+				ringTone_1msTimer = 5500;
 			}
 			else if((Ringtone_Mode == TONE_Connected))//0.97s
 			{
@@ -1514,11 +1514,11 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 			}
 			else if(Ringtone_Mode == TONE_BatteryLow) //0.38s
 			{
-				ringTone_1msTimer = 380;
+				ringTone_1msTimer = 400;
 			}
-			else//3s  BT pairing
+			else//5s  BT pairing
 			{
-				ringTone_1msTimer = 3200;
+				ringTone_1msTimer = 5200;
 			}
 #endif
 

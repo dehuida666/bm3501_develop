@@ -721,7 +721,8 @@ void BTAPP_Task(void) {
 					((BTM_LINE_IN_IsPlugged()) || 
 					  BTAPP_isBTConnected() ||
 					  //BTMA2DP_getA2DPLinkStatus(BTMA2DP_getActiveDatabaseIndex()) || 
-					 (BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE)
+					 (BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE) ||
+					 (IS_USB_CHARGE_Enable)
 					)
 				)
 				{
@@ -736,7 +737,8 @@ void BTAPP_Task(void) {
 						  (BTMA2DP_GetA2DPCodecStatus() == BT_A2DP_ACTIVE) ||
 						 //(BTMA2DP_GetPlayingStatus() == BT_PLAYING_PLAYING) ||  //if BT is disconnected, the status 
 						 (BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE) ||
-						 (BTMHFP_GetCallStatus() != BT_CALL_IDLE)
+						 (BTMHFP_GetCallStatus() != BT_CALL_IDLE) ||
+						 (IS_USB_CHARGE_Enable)
 						)
 					)
 					{
@@ -770,7 +772,7 @@ void BTAPP_Task(void) {
 
 void BT_LinkbackTaskStart ( void )
 {
-    if(BTAPP_Status.status == BT_SYSTEM_STANDBY)    //start link back task only when BT link is standby
+    if((BTAPP_Status.status == BT_SYSTEM_STANDBY) || (BTAPP_Status.status == BT_SYSTEM_PAIRING))    //start link back task only when BT link is standby or pairing
         BT_LinkBackTaskState = BT_LINKBACK_TASK_START;
 }
 
