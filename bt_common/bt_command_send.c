@@ -1361,7 +1361,7 @@ void BT_CommandSendTask( void )
             if(BT_SendingCmd.SendingCmdNum || BT_SendingAck.SendingAckNum)
             {
                 BM6X_MFB_SetHigh();
-				User_Log("BM6X_MFB_SetHigh\n");
+				//User_Log("BM6X_MFB_SetHigh\n");
                 BT_CommandSendTimer = 3;      //wait 2 - 3ms
                 BT_CMD_SendState = BT_CMD_SEND_MFB_HIGH_WAITING;
             }
@@ -1469,7 +1469,7 @@ void BT_CommandSendTask( void )
                 else
                 {
                     BM6X_MFB_SetLow();
-					User_Log("BT_CMD_SEND_ACK_OK,BM6X_MFB_SetLow\n");
+					//User_Log("BT_CMD_SEND_ACK_OK,BM6X_MFB_SetLow\n");
                     BT_CMD_SendState = BT_CMD_SEND_STATE_IDLE;
                 }
             }

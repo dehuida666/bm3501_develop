@@ -1010,7 +1010,11 @@ void User_ReturnDisLEDBTStatus()
 {
 	if(!ledvolume_timer1ms)
 	{
-		if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER)
+		if(BTMHFP_GetCallStatus() != BT_CALL_IDLE )
+		{
+			User_SetLedPattern(led_hfp_active);
+		}
+		else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER)
 		{
 			User_SetLedPattern(led_broadcast_connect_master);
 		}
@@ -1021,11 +1025,7 @@ void User_ReturnDisLEDBTStatus()
 		else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE)
 		{
 			User_SetLedPattern(led_broadcast_connect_slave);
-		}
-		else if(BTMHFP_GetCallStatus() != BT_CALL_IDLE )
-		{
-			User_SetLedPattern(led_hfp_active);
-		}
+		}		
 		else if(led_effect_index_prev <= led_bt_status_off)
 			User_SetLedPattern(led_effect_index_prev);
 
@@ -1040,17 +1040,8 @@ void User_ClearPDL()
 	ledClrPdl_timer1ms = 6500;
 }
 
-void tm1812_task()
+static void led_blinkAtVolumeLevel0(void)
 {
-	if(ledvolumeTimeOutFlag)
-	{
-		ledvolumeTimeOutFlag = false;
-		User_SetLedPattern(led_voloff);
-		user_volume_mode = VOLUME;
-		User_ReturnDisLEDBTStatus();
-
-	}
-
 	if(ledvolume0TimeOutFlag)//volume level 0
 	{
 		ledvolume0TimeOutFlag = false;
@@ -1075,7 +1066,10 @@ void tm1812_task()
 		}
 
 	}
+}
 
+static void led_blinkAtVolumeLevelMax(void)
+{
 	if(ledvolume16TimeOutFlag)//volume level 16
 	{
 		ledvolume16TimeOutFlag = false;
@@ -1101,13 +1095,27 @@ void tm1812_task()
 
 	}
 
-	
+}
+
+void tm1812_task()
+{
+	if(ledvolumeTimeOutFlag)
+	{
+		ledvolumeTimeOutFlag = false;
+		User_SetLedPattern(led_voloff);
+		user_volume_mode = VOLUME;
+		User_ReturnDisLEDBTStatus();
+
+	}
 
 	if(ledClrPdlTimeOutFlag)
 	{
 		ledClrPdlTimeOutFlag = false;
 		BTAPP_TaskReq(BT_REQ_SYSTEM_OFF);
 	}
+
+	led_blinkAtVolumeLevel0();
+	led_blinkAtVolumeLevelMax();	
 
 }
 

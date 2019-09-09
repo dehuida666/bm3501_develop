@@ -12,6 +12,15 @@
 #define VOL_MAX 17
 
 
+#define TONE_BatteryLow			0xC0
+#define TONE_Connected			0xC1
+#define TONE_PowerOff			0xC3
+#define TONE_BroadcastPairing	0xC2
+
+#define TONE_BTPairing			0xC4
+#define TONE_PowerOn			0xC5
+#define TONE_RingTone			0xC6
+
 enum {
     ST_NTP8230G_IDLE, //nothing
     ST_NTP8230G_START,    //start to init

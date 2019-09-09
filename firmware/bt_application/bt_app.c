@@ -417,9 +417,7 @@ void BTAPP_Task(void) {
 		case BT_STATE_PLAY_POWER_ON_TONE:				
 			if(BT_IsCommandSendTaskIdle()){
 				//BT_PlayTone(TONE_PowerOn);//power on	
-				//Tone_PlayPowerOn();
 				Tone_PlayVoicePrompt(TONE_PowerOn);
-				//Tone_PlayVoicePrompt(TONE_PowerOn);
 				User_Log("Send power on tone\n");
 				BTAPP_TaskState = BT_STATE_READ_LINKED_MODE;
 				BTAPP_timer1ms = 2000;
@@ -1158,7 +1156,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 #endif              
             break;
         case BT_EVENT_MSPK_CONNECTING:
-			BT_PlayTone(TONE_BroadcastPairing);
+			//BT_PlayTone(TONE_BroadcastPairing);
 			User_Log("BT_EVENT_MSPK_CONNECTING\n");
 			
 #ifdef _UNSUPPORT_3A_EVENT   
@@ -1251,7 +1249,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			//Set_LED_Style(LED_BROADCASTP, LED_ON, 500, 500);
 			if(Broadcast_connecting_more_tone_flag)
 			{
-				BT_PlayTone(TONE_BroadcastPairing);
+				//BT_PlayTone(TONE_BroadcastPairing);
 				Broadcast_connecting_more_tone_flag = false;
 			}
 			User_SetLedPattern(led_broadcast_master_connecting);
@@ -1405,17 +1403,13 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 					BT_LinkbackTaskNextXStart(1);
 				}
 			}
-			else if(BT_button_manual_reconnect_to_X == 2)//reconnect to  3rd device
-			{
-				if(User_getLinkedDeviceNumber() == 0){
-					BT_button_manual_reconnect_to_X = 0;
-					BT_LinkbackTaskNextXStart(2);
-				}
-			}
 
 			if(BT_button_manual_enter_pairing_flag){
-				if(User_getLinkedDeviceNumber() == 0)
-					BTAPP_EnterBTPairingMode();
+				if(User_getLinkedDeviceNumber() == 0){
+					User_Log("ACL disconnect:%d\n",paras[0]);
+					if(paras[1] == 0x00)//not link loss
+						BTAPP_EnterBTPairingMode();
+				}
 			}
 			else if(User_getLinkedDeviceNumber() == 0)
 			{
@@ -1468,7 +1462,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			if(BTAPP_Status.status == BT_SYSTEM_POWER_OFF)
 				break;
             BTAPP_Status.status = BT_SYSTEM_PAIRING;
-			Tone_PlayVoicePrompt(TONE_BTPairing);
+			//Tone_PlayVoicePrompt(TONE_BTPairing);
             User_SetLedPattern(led_pairing);
 			User_Log("BT_EVENT_SYS_PAIRING_START\n");
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app            

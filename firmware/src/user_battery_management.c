@@ -9,8 +9,8 @@ bool detect_timer100msTimeOutFlag = false;
 uint16_t usb_chargeOutTimer10ms = 10;
 bool usb_chargeOutTimer10msTimeOutFlag = false;
 
-uint16_t usb_chargeCompleteTimer300ms = 0;
-bool usb_chargeCompleteTimer300msTimeOutFlag = true;
+uint16_t usb_chargeCompleteTimer1ms = 0;
+bool usb_chargeCompleteTimer1msTimeOutFlag = false;
 
 
 
@@ -72,12 +72,12 @@ void BatteryManagement_Timer1MS_event(void)
 
 	}
 
-	if(usb_chargeCompleteTimer300ms)
+	if(usb_chargeCompleteTimer1ms)
 	{
-		usb_chargeCompleteTimer300ms--;
-		if(usb_chargeCompleteTimer300ms == 0)
+		usb_chargeCompleteTimer1ms--;
+		if(usb_chargeCompleteTimer1ms == 0)
 		{
-			usb_chargeCompleteTimer300msTimeOutFlag = true;
+			usb_chargeCompleteTimer1msTimeOutFlag = true;
 
 		}
 
@@ -115,6 +115,7 @@ void User_BatteryManagementTask(void)
 *USB charge
 ********************************************************************************
 */
+#if 0
 static uint8_t usb_chargeDetectPinHandler(void)
 {
 	static uint8_t pin_usbChargeDetectStatus = PIN_USB_CHARGE_HIGH;
@@ -136,8 +137,8 @@ static uint8_t usb_chargeDetectPinHandler(void)
 					{
 						usb_charge_cnt = 5;
 						pin_usbChargeDetectStatus = PIN_USB_CHARGE_LOW;
-						if(usb_chargeCompleteTimer300msTimeOutFlag){
-							usb_chargeCompleteTimer300msTimeOutFlag = false;
+						if(usb_chargeCompleteTimer1msTimeOutFlag){
+							usb_chargeCompleteTimer1msTimeOutFlag = false;
 							if(!DC_PULL_OUT)
 							{
 								USB_CHARGE_SetEnable();
@@ -183,6 +184,7 @@ static uint8_t usb_chargeDetectPinHandler(void)
 
 	return pin_usbChargeDetectStatus;
 }
+#endif
 
 static uint16_t usb_getAdVaule(void)
 {
@@ -219,7 +221,7 @@ static void usb_calculateAdValue(bool on_off)
 
 			User_Log("USB Chrage value = %d\n",usb_detectValueAvrg);
 
-			if(usb_detectValueAvrg == 0)//Charge complete
+			if(usb_detectValueAvrg <= 1)//Charge complete
 			{
 				if(!isUSBChargeComplete)
 					isUSBChargeComplete = true;
@@ -240,10 +242,11 @@ static void usb_calculateAdValue(bool on_off)
 
 }
 
-static void usb_delay300msToEnableCharge(void)
+static void usb_ChargeOutEnableCharge(void)
 {
-	if(usb_chargeCompleteTimer300msTimeOutFlag){
-		usb_chargeCompleteTimer300msTimeOutFlag = false;
+	//if(usb_chargeCompleteTimer1msTimeOutFlag)
+	{
+		//usb_chargeCompleteTimer1msTimeOutFlag = false;
 		if(!DC_PULL_OUT)
 		{
 			USB_CHARGE_SetEnable();
@@ -274,8 +277,11 @@ static void USB_chargeHandle(void)
 			USB_CHARGE_SetDisable();
 		}
 
-		if(usb_chargeCompleteTimer300msTimeOutFlag == false)
-			usb_chargeCompleteTimer300msTimeOutFlag = true;
+		if(usb_chargeCompleteTimer1ms)
+			usb_chargeCompleteTimer1ms = 0;
+
+		//if(usb_chargeCompleteTimer1msTimeOutFlag == false)
+			//usb_chargeCompleteTimer1msTimeOutFlag = true;
 
 		if(pin_usbChargeDetectStatus == PIN_USB_CHARGE_LOW)
 			pin_usbChargeDetectStatus = PIN_USB_CHARGE_HIGH;
@@ -286,19 +292,29 @@ static void USB_chargeHandle(void)
 	else
 	{
 		if(IS_USB_CHARGE_Enable)//detect adc 
-		{
-			//usb_calculateAdValue(ON);
+		{			
 			if(USB_isChargecomplete())
 			{
-				USB_CHARGE_SetDisable();
-				usb_chargeCompleteTimer300ms = 300;
-				User_Log("USB_CHARGE_SetDisable\n");
+				if(usb_chargeCompleteTimer1msTimeOutFlag == true)//charge still complete after 30s,then set charge disable 
+				{
+					usb_chargeCompleteTimer1msTimeOutFlag = false;
+					USB_CHARGE_SetDisable();				
+					User_Log("USB_CHARGE_SetDisable\n");
+				}
+				else
+				{
+					if(!usb_chargeCompleteTimer1ms)
+						usb_chargeCompleteTimer1ms = 30000;
+				}
 			}
 			else
 			{
+				usb_chargeCompleteTimer1ms = 0;
+				usb_chargeCompleteTimer1msTimeOutFlag = false;
+				
 				if(DC_PULL_OUT){
 					if(currentBatteryLevel <= 40){
-						USB_CHARGE_SetDisable();
+						USB_CHARGE_SetDisable();						
 						User_Log("USB_CHARGE_SetDisable\n");
 					}
 				}
@@ -323,7 +339,7 @@ static void USB_chargeHandle(void)
 							{
 								usb_charge_cnt = 5;
 								pin_usbChargeDetectStatus = PIN_USB_CHARGE_LOW;
-								usb_delay300msToEnableCharge();
+								usb_ChargeOutEnableCharge();
 							}
 						}
 					}

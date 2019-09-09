@@ -139,9 +139,9 @@ void AnalogAudioDetectTask(void)
             if( audio_selected == AUDIO_AUXIN )
             {
 				User_SoundOnOff(OFF,true);
-                BTMA2DP_PauseStart();
-                BT_EnterNonConnectableMode(0);//non-connectable
+                BTMA2DP_PauseStart();                
                 BT_EnterLineInMode(1, 0);
+				BT_EnterNonConnectableMode(0);//non-connectable
 				User_Log("AUDIO_AUXIN\n");
 				
             }

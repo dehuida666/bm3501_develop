@@ -32,6 +32,8 @@
 #include "bt_app.h"
 #include "bt_data.h"
 #include "led.h"
+#include "bt_multi_spk.h"
+
 
 
 BT_HFP_STATUS BT_CallStatus;
@@ -45,11 +47,14 @@ void BTMHFP_EventHandler( BT_HFP_EVENTS event, uint8_t* paras, uint16_t size )
         case BT_EVENT_CALL_STATUS_CHANGED:
 			User_Log("BT_EVENT_CALL_STATUS_CHANGED \n");
             BT_CallStatus = paras[1];
+			BTM_HFPLinkStatus.HFP_DatabaseIndex = paras[0];
             if(BT_CallStatus != BT_CALL_IDLE)
             {
+				#if 0
 				if(BTM_LINE_IN_GetLineInStatus() != LINE_IN_INACTIVE)
         			;//BT_DisconnectHFPProfile();
 				else
+				#endif
 				{
 					//BTVOL_ChangeVolMode(HFP_VOL_MODE, false);
 					NF8230dsp_SetLChannelOnOff(OFF);
@@ -79,6 +84,15 @@ void BTMHFP_EventHandler( BT_HFP_EVENTS event, uint8_t* paras, uint16_t size )
 				NF8230dsp_SetEQOnOff(ON);
 
 				User_SetLedPattern(led_bt_status_off);
+				if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+				{
+					User_SetLedPattern(led_broadcast_master_connecting);
+				}
+				else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTING)
+				{
+					User_SetLedPattern(led_broadcast_master);
+				}
+				
             }
             break;
             
@@ -86,10 +100,25 @@ void BTMHFP_EventHandler( BT_HFP_EVENTS event, uint8_t* paras, uint16_t size )
             BTM_HFPLinkStatus.HFPLinkStatus.bfHFP = 1;
             BTM_HFPLinkStatus.HFP_DatabaseIndex = paras[1] & 0xf; 
             BTAPP_EventHandler(BT_EVENT_HFP_LINK_CONNECTED, 0, 0);
+			User_Log("BTM_HFPLinkStatus.HFP_DatabaseIndex = %d\n",BTM_HFPLinkStatus.HFP_DatabaseIndex);
             break;
             
         case BT_EVENT_HFP_DISCONNECTED:
-            BTM_HFPLinkStatus.HFPLinkStatus.bfHFP = 0;
+			if(User_getLinkedDeviceNumber() < 2){
+            	BTM_HFPLinkStatus.HFPLinkStatus.bfHFP = 0;
+			}
+			else
+			{
+				if(BTM_HFPLinkStatus.HFP_DatabaseIndex == (paras[1] & 0xf))
+				{
+					if(BTM_HFPLinkStatus.HFP_DatabaseIndex)
+						BTM_HFPLinkStatus.HFP_DatabaseIndex = 0;
+					else
+						BTM_HFPLinkStatus.HFP_DatabaseIndex = 1;
+				}
+			}
+			User_Log("BTM_HFPLinkStatus.HFPLinkStatus.bfHFP = %d\n",BTM_HFPLinkStatus.HFPLinkStatus.bfHFP);
+			User_Log("BTM_HFPLinkStatus.HFP_DatabaseIndex = %d\n",BTM_HFPLinkStatus.HFP_DatabaseIndex);
 #ifdef _SPP_MULTI_LINK_CTRL
             if( !BTMA2DP_getA2DPLinkStatus(BTM_HFPLinkStatus.HFP_DatabaseIndex)
                     && !BTMA2DP_getAVRCPLinkStatus(BTM_HFPLinkStatus.HFP_DatabaseIndex) )   //A2DP and AVRCP belonging to this database index are also disconnected?

@@ -79,32 +79,36 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 				User_Log("User_getLinkedDeviceNumber = %d\n",User_getLinkedDeviceNumber());
 				if(BTAPP_isBTConnected())
 				{
-					if(User_GetPairedRecordNumber() > 1){
-						if((BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER))
-						{
-							BT_DisconnectAllProfile();
-							BT_button_manual_enter_pairing_flag = false;
-							BT_button_manual_reconnect_to_X = 1;
-
-						}
-						else if(User_getLinkedDeviceNumber() < 2)
-						{
-							if(!BT_LinkbackTaskRunning())
+					if(BTMHFP_GetCallStatus() == BT_CALL_IDLE ){
+						if(User_GetPairedRecordNumber() > 1){
+							if((BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER))
 							{
-								BT_LinkbackTaskNextXStart(1);
-							}
-						}
-						#if 0   // Cancel BT button short press to cycle through connected devices
-						else if(User_getLinkedDeviceNumber() == 2)
-						{
-							if(User_GetPairedRecordNumber() > 2){
+								#if 0
 								BT_DisconnectAllProfile();
 								BT_button_manual_enter_pairing_flag = false;
-								BT_button_manual_reconnect_to_X = 2;
+								BT_button_manual_reconnect_to_X = 1;
+								#endif
+
 							}
+							else if(User_getLinkedDeviceNumber() < 2)
+							{
+								if(!BT_LinkbackTaskRunning())
+								{
+									BT_LinkbackTaskNextXStart(1);
+								}
+							}
+							#if 0   // Cancel BT button short press to cycle through connected devices
+							else if(User_getLinkedDeviceNumber() == 2)
+							{
+								if(User_GetPairedRecordNumber() > 2){
+									BT_DisconnectAllProfile();
+									BT_button_manual_enter_pairing_flag = false;
+									BT_button_manual_reconnect_to_X = 2;
+								}
+							}
+							#endif
+							
 						}
-						#endif
-						
 					}
 				}
 				else
@@ -165,8 +169,7 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 				{
 					BTMSPK_CancelGroup();
 					BTAPP_EnterBTPairingMode();
-					if(BTAPP_isBTConnected())
-						BT_button_manual_enter_pairing_flag = false;
+					BT_button_manual_enter_pairing_flag = false;
 				}
 
 			}

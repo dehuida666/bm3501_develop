@@ -152,16 +152,6 @@ typedef enum {
 #define VENDOR_CMD_SIZE 	   9   
 
 
-
-#define TONE_BatteryLow			0xC0
-#define TONE_Connected			0xC1
-#define TONE_PowerOff			0xC3
-#define TONE_BroadcastPairing	0xC2
-
-#define TONE_BTPairing			0xC4
-#define TONE_PowerOn			0xC5
-
-
 void BT_GiveUpThisCommand( void );
 uint8_t BT_IsCommandSendTaskIdle( void );
 void BT_SendBytesAsCompleteCommand(uint8_t* command, uint8_t command_length);
