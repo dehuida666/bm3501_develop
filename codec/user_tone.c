@@ -477,7 +477,6 @@ void BTMTONE_Task(void)
 
 		case TONE_TASK_POWER_ON:			
 			Tone_PlayPowerOn();
-			//ntp8230g_set_master_volume_temp(12);
 			TONE_TaskState = TONE_TASK_IDLE;
 			break;
 

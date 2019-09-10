@@ -1208,7 +1208,7 @@ void BT_EnterNonConnectableMode(uint8_t mode)
 	command[3] = BTM_UTILITY_FUNCTION;		//command ID
 	command[4] = 0x03;						//BTM mode setting.
 	command[5] = mode;						//0x00:force BTM into non-connectable mode 0x01:normal
-	command[6] = calculateChecksum(&command[1], &command[5]);
+	command[6] = calculateChecksum(&command[2], &command[5]);
 	copyDataToBufferAndRegisterCommand(&command[0], 7);
 }
 

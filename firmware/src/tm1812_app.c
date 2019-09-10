@@ -1012,7 +1012,18 @@ void User_ReturnDisLEDBTStatus()
 	{
 		if(BTMHFP_GetCallStatus() != BT_CALL_IDLE )
 		{
-			User_SetLedPattern(led_hfp_active);
+			if(
+				(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) ||
+				(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+			  )
+			{
+				User_SetLedPattern(led_broadcast_connect_master);
+			}
+			else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE)
+			{
+				User_SetLedPattern(led_broadcast_connect_slave);
+			}
+			User_SetLedPattern(led_hfp_active);//Must put behind broadcast led, otherwise will set  hfp led off
 		}
 		else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER)
 		{

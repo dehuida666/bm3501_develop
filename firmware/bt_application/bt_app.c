@@ -675,8 +675,6 @@ void BTAPP_Task(void) {
 
 		DC_DetectTask();
 		BTMTONE_Task();
-
-
 		BTVOL_DelayChangeVolMode();
 
 		if(resetAllVolumeTimeOutFlag)
@@ -998,10 +996,12 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
     switch(event)
     {
         case BT_EVENT_CMD_SENT_ACK_OK:
+			User_Log("BT_EVENT_CMD_SENT_ACK_OK: command id = %d\n",paras[0]);
             break;
             
         case BT_EVENT_CMD_SENT_ACK_ERROR:
             BT_GiveUpThisCommand();
+			User_Log("BT_EVENT_CMD_SENT_ACK_ERROR: command id = %d, ack_status = %d\n",paras[0],paras[1]);
             break;
             
         case BT_EVENT_CMD_SENT_NO_ACK:
@@ -1104,6 +1104,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
             
         case BT_EVENT_MSPK_STANDBY:
+#if 0
 //linkback to all device, diffin, 2019-6-18 >>	
 //start linkback task when multi speaker reports idle status.
 //but this may cause other side effect, may need more accurate condtion to start the task.	
@@ -1115,7 +1116,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             }
 #endif
 //linkback to all device, diffin, 2019-6-18 <<		
-
+#endif
 			if(Broadcast_go_to_slave_flag)
 			{
 				Broadcast_go_to_slave_flag = false;
@@ -1351,18 +1352,14 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			}			
 			
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
-			BT_PlayTone(TONE_Connected);
-			//if(BT_EVENT_A2DP_LINK_CONNECTED == event)
-			{
-              if(BT_IsCommandSendTaskIdle())
-			  {
-                BT_GetPairRecordCommand();
-              }
-			}
+			if(BT_IsCommandSendTaskIdle())
+				BT_PlayTone(TONE_Connected);
 			
-			#ifdef RECONNECT_TO_PDL
-            //BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18   
-            #endif
+			if(BT_IsCommandSendTaskIdle())
+			{
+				BT_GetPairRecordCommand();
+			}
+
 			
 			User_Log("BT_EVENT_A2DP_LINK_CONNECTED\n");
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app            

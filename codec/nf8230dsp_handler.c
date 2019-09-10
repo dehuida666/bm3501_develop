@@ -37,7 +37,7 @@ DRV_I2C_BUFFER_HANDLE I2C_bufferHandle = NULL;
 #define bass_step 7
 #define VOLUME_0db 0xCF
 
-#define vol_tone   11
+#define vol_tone   0xCF
 
 
 extern uint8_t I2C_limitedTimer;
@@ -941,7 +941,7 @@ static void ntp8230g_set_master_volume_MAX_temp()
 	I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, volume_master_SW_step_gain[VOL_MAX - 1] - 40);
 }
 
-void ntp8230g_set_master_volume_temp(uint8_t vol)
+void ntp8230g_set_master_volume_temp(uint8_t vol_dB)
 {
 	if(!is_ntp8230g_ready())
 		return;
@@ -949,16 +949,13 @@ void ntp8230g_set_master_volume_temp(uint8_t vol)
 	if(set_master_volume_temp_Flag)
 		return;
 	
-	User_Log("ntp8230g_set_master_volume_temp %d\n",vol);
-
-	if(vol == 0)
-		return;
+	User_Log("ntp8230g_set_master_volume_temp 0x%02x\n",vol_dB);
 	
 	if(sound_is_mute_flag)
 		User_SoundOnOff(ON, true);
 	
-	I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, 0xCF/*volume_master_step_gain[vol]*/);
-	I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, 0xCF/*volume_master_SW_step_gain[vol]*/);
+	I2C_Write_NTP8230_LR(MASTER_VOLUME_REG, vol_dB/*volume_master_step_gain[vol]*/);
+	I2C_Write_NTP8230_SW(MASTER_VOLUME_REG, vol_dB/*volume_master_SW_step_gain[vol]*/);
 }
 
 
@@ -1495,7 +1492,7 @@ void User_SetRingToneVolume(uint8_t Ringtone_Mode, uint8_t status)
 				
 			}
 			else if(Ringtone_Mode == TONE_PowerOff)
-				ntp8230g_set_master_volume_temp(vol_tone);
+				ntp8230g_set_master_volume_temp(0xD5);//3dB
 			else
 				ntp8230g_set_master_volume_temp(vol_tone);
 

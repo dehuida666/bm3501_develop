@@ -119,7 +119,7 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 						{
 							BTMSPK_CancelGroup();
 							//User_LinkBackToBTDevice();
-							BT_LinkbackTaskStart();
+							//BT_LinkbackTaskStart();
 						}
 						else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER)
 						{
@@ -470,8 +470,8 @@ void KEY_Handler ( uint8_t key, uint8_t event )
 							//BTMSPK_AddMoreSpeaker();
 							break;
                         case BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE:							
-								BTMSPK_CancelGroup();	
-								Broadcast_go_to_slave_flag = true;								
+							BTMSPK_CancelGroup();	
+							Broadcast_go_to_slave_flag = true;								
                             break;
                         case BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING:
                             //BTMSPK_CancelGroupCreation();

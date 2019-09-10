@@ -84,13 +84,17 @@ void BTMHFP_EventHandler( BT_HFP_EVENTS event, uint8_t* paras, uint16_t size )
 				NF8230dsp_SetEQOnOff(ON);
 
 				User_SetLedPattern(led_bt_status_off);
-				if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+				if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER)
+				{
+					User_SetLedPattern(led_broadcast_connect_master);
+				}
+				else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
 				{
 					User_SetLedPattern(led_broadcast_master_connecting);
 				}
-				else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTING)
+				else if(BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_SLAVE)
 				{
-					User_SetLedPattern(led_broadcast_master);
+					User_SetLedPattern(led_broadcast_connect_slave);
 				}
 				
             }

@@ -82,7 +82,7 @@ extern void NF8230dsp_SetEQOnOff(bool on_off);
 
 bool User_IsRingToneStopped(void);
 
-void ntp8230g_set_master_volume_temp(uint8_t vol);
+//void ntp8230g_set_master_volume_temp(uint8_t vol_dB);
 
 
 #endif      //_DSP_HANDLER_H_
