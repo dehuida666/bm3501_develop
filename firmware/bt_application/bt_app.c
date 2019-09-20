@@ -1580,6 +1580,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
                 BTAPP_timer1ms = 500; //clear time out timer    //2019
                 BTAPP_TaskState = BT_STATE_LINKBACK_START;
             }
+			User_Log("lastLinkedMode = %d\n",BTAPP_Status.lastLinkedMode);
             break;
 
         case BT_EVENT_A2DP_BREAK_IN:	
@@ -1789,6 +1790,10 @@ void BTAPP_EnterBTPairingMode( void )
 			#ifdef RECONNECT_TO_PDL
             BT_LinkbackTaskStop(); //linkback to all device, diffin, 2019-6-18
             #endif			
+		}
+		else
+		{
+			User_SetLedPattern(led_pairing);
 		}
     }
 }
