@@ -141,7 +141,7 @@ enum {
 //DC detect, 2019-6-29 <<
 
 #define Battery_ADC_Value_Compensation     20
-
+#define Battery_ADCValueFull     880
 
 static void batteryDetect( void );
 static uint8_t bat_convert_advalue_to_level(uint16_t ad_value);
@@ -167,6 +167,8 @@ uint8_t led_power_on_failed_cnt = 0;
  bool isSyncToBTM;
 
  bool BatteryLowDecreaseVolume3dB_flag = false;
+
+ bool AutoPowerOffTone_flag = false;
 
  /*-----------------------------------------------------------------------------*/
 /**/
@@ -220,6 +222,8 @@ void BTAPP_Init( void )
 	BTAPP_Status.linkedDeviceNumber = 0;
 
 	BatteryLowDecreaseVolume3dB_flag = false;
+
+	AutoPowerOffTone_flag = false;
 
 }
 
@@ -1343,7 +1347,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
         case BT_EVENT_A2DP_LINK_CONNECTED:			
         case BT_EVENT_A2DP_LINK_CHANGED:
 			if(
-				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
+				//(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
 				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
 
 			)
@@ -1352,8 +1356,8 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 			}			
 			
             BTAPP_Status.status = BT_SYSTEM_CONNECTED;
-			if(BT_IsCommandSendTaskIdle())
-				BT_PlayTone(TONE_Connected);
+			//if(BT_IsCommandSendTaskIdle())
+				//BT_PlayTone(TONE_Connected);
 			
 			if(BT_IsCommandSendTaskIdle())
 			{
@@ -1429,7 +1433,11 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_SYS_POWER_OFF:
             BTAPP_Status.status = BT_SYSTEM_POWER_OFF;
-			//BT_PlayTone(TONE_PowerOff);
+			if(!AutoPowerOffTone_flag){
+				BT_PlayTone(TONE_PowerOff);
+				AutoPowerOffTone_flag = false;
+			}
+			
 			User_SetLedPattern(led_voloff);
 			User_LedPrimaryPairingOFF();
 			User_SetLedPattern(led_bt_status_off);
@@ -1460,7 +1468,8 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 				break;
             BTAPP_Status.status = BT_SYSTEM_PAIRING;
 			//Tone_PlayVoicePrompt(TONE_BTPairing);
-            User_SetLedPattern(led_pairing);
+			if(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
+            	User_SetLedPattern(led_pairing);
 			User_Log("BT_EVENT_SYS_PAIRING_START\n");
 #ifdef _BLE_ADV_CTRL_BY_MCU         //v1.16 app            
             if(BLE_advUpdateBTMState(BLE_BTM_PAIR))
@@ -1472,7 +1481,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
             break;
         case BT_EVENT_SYS_PAIRING_FAILED:			
             if(
-				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
+				//(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
 				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
 
 			)
@@ -1484,7 +1493,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 
         case BT_EVENT_LINKBACK_SUCCESS:
 			if(
-				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
+				//(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
 				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
 
 			)
@@ -1499,7 +1508,7 @@ void BTAPP_EventHandler(BT_APP_EVENTS event, uint8_t* paras, uint16_t size )
 
         case BT_EVENT_LINKBACK_FAILED:
             if(
-				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
+				//(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) &&
 				(BTMSPK_GetMSPKStatus() != BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING)
 
 			)
@@ -2157,7 +2166,7 @@ static void batteryDetect( void )
 
 	if(!DC_PULL_OUT){  //if charging , compensate for the adc value
 		if(bat_adc_value > Battery_ADC_Value_Compensation){
-			if(bat_adc_value < 885)
+			if(bat_adc_value < Battery_ADCValueFull)
 				bat_adc_value -= Battery_ADC_Value_Compensation;
 		}
 	}
@@ -2224,12 +2233,12 @@ static uint8_t bat_convert_advalue_to_level(uint16_t ad_value)
 	{
 		bat_level = 80;
 	}
-	else if(bat_adc_value < 885)//
+	else if(bat_adc_value < Battery_ADCValueFull)//
 	{
 		bat_level = 90;
 			
 	}
-	else if(bat_adc_value >= 885)//2.856v   12.4
+	else if(bat_adc_value >= Battery_ADCValueFull)//2.83 12.3 //2.856v   12.4
 	{
 		bat_level = 100;
 	}
@@ -2339,7 +2348,7 @@ uint8_t User_GetCurrentBatteryLevel()
 	if(!DC_PULL_OUT){  //if charging , compensate for the adc value
 		if(bat_adc_value > Battery_ADC_Value_Compensation)
 		{
-			if(bat_adc_value < 885)
+			if(bat_adc_value < Battery_ADCValueFull)
 				bat_adc_value -= Battery_ADC_Value_Compensation;
 		}
 	}
@@ -2372,8 +2381,7 @@ void User_LEDDisplayChargeBatteryLevel(uint8_t level)
 		}
 		else if(level < 100)//71-100% battery: flash Green
 		{
-			Set_LED_Style(LED_1,LED_BLINK,1000,1000);
-			
+			Set_LED_Style(LED_1,LED_BLINK,1000,1000);			
 
 		}
 		else
@@ -2587,7 +2595,7 @@ void BTVOL_DelayChangeVolMode( void )
 
 void BTVOL_StartChangeVolMode(VOLUME_MODE mode, bool syncToBTM )
 {
-	btDelayToChangeVolMode_timer1ms = 800;
+	btDelayToChangeVolMode_timer1ms = 1300;//800;   //avoid high frequency noise
 	btDelayMode = mode;
 	isSyncToBTM = syncToBTM;
 }

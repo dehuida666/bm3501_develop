@@ -31,6 +31,10 @@ uint8_t ledvolume16_blink_cnt = 0;
 uint16_t ledClrPdl_timer1ms = 0;
 bool ledClrPdlTimeOutFlag = false;
 
+uint16_t ledTestCharge_timer1ms = 0;
+bool ledTestChargeTimeOutFlag = false;
+
+
 LEVEL_LEDS_PRIORITY led_priority_ctl_bit;
 
 /*-----------------------------------------------------------------
@@ -99,6 +103,16 @@ void TM1812_timer_1ms()
 		}
 	}
 
+	if(ledTestCharge_timer1ms)
+	{
+		ledTestCharge_timer1ms--;
+		if(ledTestCharge_timer1ms == 0)
+		{
+			ledTestChargeTimeOutFlag = true;
+		}
+
+	}
+
 }
 
 /*********************************************************************************
@@ -126,6 +140,9 @@ void TM1812_LEDInit(void)
 
 	ledClrPdl_timer1ms = 0;
 	ledClrPdlTimeOutFlag = false;
+
+	 ledTestCharge_timer1ms = 0;
+	 ledTestChargeTimeOutFlag = false;
 
 }
 
@@ -1049,6 +1066,9 @@ void User_ClearPDL()
 {
 	User_SetLedPattern(led_clr_pdl);
 	ledClrPdl_timer1ms = 6500;
+	LED1_OFF();
+	LED2_ON();
+	ledTestCharge_timer1ms = 500;
 }
 
 static void led_blinkAtVolumeLevel0(void)
@@ -1119,15 +1139,41 @@ void tm1812_task()
 
 	}
 
+	if(ledClrPdl_timer1ms)
+	{
+		if(ledTestChargeTimeOutFlag)
+		{
+			ledTestChargeTimeOutFlag = false;
+			LED1_TOGGLE();
+			LED2_TOGGLE();
+			ledTestCharge_timer1ms = 500;
+			
+		}
+
+	}
+	else
+	{
+		ledTestCharge_timer1ms = 0;
+		ledTestChargeTimeOutFlag = false;
+	}
+
 	if(ledClrPdlTimeOutFlag)
 	{
 		ledClrPdlTimeOutFlag = false;
 		BTAPP_TaskReq(BT_REQ_SYSTEM_OFF);
+		
+		if(!DC_PULL_OUT)
+			User_LEDDisplayChargeBatteryLevel(currentBatteryLevel);
 	}
 
 	led_blinkAtVolumeLevel0();
 	led_blinkAtVolumeLevelMax();	
 
+}
+
+bool isClrPdlWorking(void)
+{
+	return ledClrPdl_timer1ms;
 }
 
 

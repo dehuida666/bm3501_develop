@@ -164,6 +164,8 @@ void User_LedPowerIndicate(bool on_off);
 
 void TM1812_Test(void);
 
+bool isClrPdlWorking(void);
+
 
 
     /* Provide C++ Compatibility */

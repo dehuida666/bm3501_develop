@@ -244,6 +244,8 @@ uint8_t BT_button_manual_reconnect_to_X;
 
 bool Broadcast_connecting_more_tone_flag;
 
+extern bool AutoPowerOffTone_flag;
+
 
 uint8_t BTAPP_GetStatus(void);
 

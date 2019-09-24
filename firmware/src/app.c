@@ -230,7 +230,7 @@ void User_AutoOffProcess(void)
     { 
         User_Log("User_AutoOffProcess\n");
 		BTAPP_TaskReq(BT_REQ_SYSTEM_OFF);
-        //User_sys_nosignal_time = 0;
+		AutoPowerOffTone_flag = true;
     }
   }
   else

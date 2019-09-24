@@ -57,6 +57,8 @@ void LED_timer_1ms(void)
         --LED[i].LED_timer;
         if(!LED[i].LED_timer)
         {
+			if(isClrPdlWorking())
+				return;
             LED_process(i);
         }
     }
@@ -152,6 +154,9 @@ void LED_process( uint16_t index )
 
 void Set_LED_Style(LED_INDEX index, LED_ACTION action, uint16_t LED_on_period_1ms, uint16_t LED_off_period_1ms)
 {
+	if(isClrPdlWorking())
+		return;
+	
     LED[index].LED_action = action;
     LED[index].LED_on_period = LED_on_period_1ms;
     LED[index].LED_off_period = LED_off_period_1ms;
@@ -171,6 +176,7 @@ void Set_LED_Style(LED_INDEX index, LED_ACTION action, uint16_t LED_on_period_1m
 
         }
     }
+	
     LED_process(index);
 }
 
