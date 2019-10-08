@@ -28,6 +28,7 @@
 #include "bt_command_send.h"
 #include "bt_app.h"
 #include "led.h"
+#include "bt_multi_spk.h"
 
 enum
 {
@@ -184,11 +185,15 @@ void BTM_LINE_IN_EventHandler( BT_LINE_IN_EVENTS event, uint8_t* paras, uint16_t
             LineInStatus = paras[1];			
             if(LineInStatus != LINE_IN_INACTIVE)
             {
-				if(!BTM_LINE_IN_IsPlugged())
+				if((BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) ||
+				    (BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING))
 				{
-					BT_EnterLineInMode(0, 0);
-					User_Log("Enter BT mode again\n");
-					break;
+					if(!BTM_LINE_IN_IsPlugged())
+					{
+						BT_EnterLineInMode(0, 0);
+						User_Log("Enter BT mode again\n");
+						break;
+					}
 				}
 				
 				if(BTMHFP_GetCallStatus() == BT_CALL_IDLE)       //not in SCO mode
@@ -201,10 +206,14 @@ void BTM_LINE_IN_EventHandler( BT_LINE_IN_EVENTS event, uint8_t* paras, uint16_t
             }
             else
             {
-				if(BTM_LINE_IN_IsPlugged()){
-					BT_EnterLineInMode(1, 0);
-					User_Log("Enter Line in mode again\n");
-					break;
+				if((BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_CONNECTED_AS_BROADCAST_MASTER) ||
+				    (BTMSPK_GetMSPKStatus() == BT_CSB_STATUS_BROADCAST_MASTER_CONNECTING))
+				{
+					if(BTM_LINE_IN_IsPlugged()){
+						BT_EnterLineInMode(1, 0);
+						User_Log("Enter Line in mode again\n");
+						break;
+					}
 				}
 				
 				if(BTMHFP_GetCallStatus() != BT_CALL_IDLE)           //if it is SCO mode, back to SCO(this is not possible but safe for code)

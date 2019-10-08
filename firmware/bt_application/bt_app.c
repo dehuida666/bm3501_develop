@@ -2595,7 +2595,11 @@ void BTVOL_DelayChangeVolMode( void )
 
 void BTVOL_StartChangeVolMode(VOLUME_MODE mode, bool syncToBTM )
 {
-	btDelayToChangeVolMode_timer1ms = 1300;//800;   //avoid high frequency noise
+	if(BTMA2DP_GetA2DPCodecStatus() == BT_A2DP_ACTIVE)
+		btDelayToChangeVolMode_timer1ms = 1400;//avoid high frequency noise
+	else
+		btDelayToChangeVolMode_timer1ms = 800;   
+		
 	btDelayMode = mode;
 	isSyncToBTM = syncToBTM;
 }
