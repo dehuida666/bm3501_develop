@@ -161,8 +161,6 @@ extern "C" {
 #define DRV_USART_BUFFER_QUEUE_SUPPORT              false
 #define DRV_USART_SUPPORT_TRANSMIT_DMA              false
 #define DRV_USART_SUPPORT_RECEIVE_DMA               false
-#define DRV_I2C_INTERRUPT_MODE                    		true
-
 
 // *****************************************************************************
 // *****************************************************************************

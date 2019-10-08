@@ -64,6 +64,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "key.h"
 #include "nf8230dsp_handler.h"
 #include "user_battery_management.h"
+#include "user_i2c.h"
 
 
 // *****************************************************************************
@@ -154,7 +155,8 @@ void APP_Initialize ( void )
 	UART_HandleForPrint = DRV_USART_Open(DRV_USART_INDEX_1, 0);
 #endif
 
-	
+	IIC_Init();
+
 	TM1812_LEDInit();
 	NF8230dsp_init();
 	bt_disableUartTransferIntr();
@@ -165,7 +167,7 @@ void APP_Initialize ( void )
 	DRV_TMR1_Start();
 	LED_init();
 	KEY_Initialize();
-	I2C_Handle = DRV_I2C_Open( DRV_I2C_INDEX_0, 0 );
+	//I2C_Handle = DRV_I2C_Open( DRV_I2C_INDEX_0, 0 );
 	UART_Handle = DRV_USART_Open(DRV_USART_INDEX_0, 0);
 	DRV_ADC_Open();
     

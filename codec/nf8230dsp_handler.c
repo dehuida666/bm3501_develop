@@ -7,14 +7,13 @@
 #include "bt_command_send.h"
 #include "user_tone.h"
 #include "bt_hfp.h"
-
-
+#include "user_i2c.h"
 
 
 #if defined (__XC32__)      //PIC32 harmony based driver
 
 extern DRV_HANDLE I2C_Handle;
-DRV_I2C_BUFFER_HANDLE I2C_bufferHandle = NULL;
+//DRV_I2C_BUFFER_HANDLE I2C_bufferHandle = NULL;
 
 #endif
 
@@ -599,7 +598,7 @@ void DSP_Timer1MS_event(void)
 
 
 
-
+#ifdef HW_I2C 
 /*-----------------------------------------------------------------------------*/
  static bool DSP_Write_LR(uint16_t dataLen, uint8_t* data)
 {
@@ -687,6 +686,23 @@ void DSP_Timer1MS_event(void)
     return true;
 #endif        
 }
+#else
+
+static bool DSP_Write_LR(uint16_t dataLen, uint8_t* data)
+{
+	uint8_t result;
+	result = User_I2C_WriteBytes(data, dataLen, DSP_I2C_ADDR_LR);
+	//User_Log("User_I2C_WriteBytes %d\n",result);
+	return (!result);
+}
+static bool DSP_Write_SW(uint16_t dataLen, uint8_t* data)
+{
+	uint8_t result;
+	result = User_I2C_WriteBytes(data, dataLen, DSP_I2C_ADDR_SW);
+	return (!result);
+}
+
+#endif
 
 /********************************************************************/
 static unsigned int I2C_Write_NTP8230_LR(unsigned char addr, unsigned char dat)

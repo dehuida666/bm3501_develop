@@ -127,25 +127,6 @@ void __ISR(_UART_2_VECTOR, ipl1AUTO) _IntHandlerDrvUsartInstance1(void)
  
  
 
-void __ISR(_I2C_1_VECTOR, ipl1AUTO) _IntHandlerDrvI2CInstance0(void)
-{
-	DRV_I2C0_Tasks();
- 
-}
-         
- 
-   
-  
-   
-   
-   
-  
- 
-
-  
-  
-  
-  
 /*******************************************************************************
  End of File
 */
