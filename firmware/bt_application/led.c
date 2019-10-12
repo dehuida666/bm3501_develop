@@ -57,7 +57,7 @@ void LED_timer_1ms(void)
         --LED[i].LED_timer;
         if(!LED[i].LED_timer)
         {
-			if(isClrPdlWorking())
+			if(isClrPdlWorking() && (i != LED_PATTERN))
 				return;
             LED_process(i);
         }
@@ -154,7 +154,7 @@ void LED_process( uint16_t index )
 
 void Set_LED_Style(LED_INDEX index, LED_ACTION action, uint16_t LED_on_period_1ms, uint16_t LED_off_period_1ms)
 {
-	if(isClrPdlWorking())
+	if(isClrPdlWorking() && (index != LED_PATTERN))
 		return;
 	
     LED[index].LED_action = action;
